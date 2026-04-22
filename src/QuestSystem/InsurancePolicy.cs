@@ -3,28 +3,63 @@ using GameSystems.CharacterSystem;
 
 namespace GameSystems.QuestSystem
 {
-    public class InsurancePolicy
+    public abstract class InsurancePolicy
     {
-        public Character InsuredCharacter { get; private set; }
-        public Quest TargetQuest { get; private set; }
+        public Character InsuredCharacter { get; protected set; }
+        public Quest TargetQuest { get; protected set; }
 
-        public int Premium { get; private set; } // Başarı durumunda oyuncunun kazanacağı prim
-        public int Compensation { get; private set; } // Ölüm durumunda oyuncunun ödeyeceği canlandırma tazminatı
+        public int Premium { get; protected set; } // Başarı durumunda oyuncunun kazanacağı prim
+        public int Compensation { get; protected set; } // Ölüm durumunda oyuncunun ödeyeceği canlandırma tazminatı
+
+        // Teklif Kaydırıcısı (1 - 100). 50 dengeli, >50 oyuncuya kârlı, <50 karaktere kârlı
+        public int SliderValue { get; private set; }
 
         public InsurancePolicy(Character character, Quest quest)
         {
             InsuredCharacter = character;
             TargetQuest = quest;
+            SliderValue = 50; // Varsayılan değer
             CalculatePolicy();
         }
 
-        private void CalculatePolicy()
+        public void UpdateSlider(int newValue)
+        {
+            SliderValue = Math.Clamp(newValue, 1, 100);
+            CalculatePolicy();
+        }
+
+        protected virtual void CalculatePolicy()
         {
             float riskFactor = CalculateRisk();
 
-            // Risk ne kadar yüksekse, prim ve tazminat da o oranda artar
-            Premium = (int)(TargetQuest.BaseReward * 0.2f * (1 + riskFactor));
-            Compensation = (int)(TargetQuest.BaseReward * 1.5f * (1 + riskFactor));
+            // Temel Prim ve Tazminat hesaplaması
+            int basePremium = (int)(TargetQuest.BaseReward * 0.2f * (1 + riskFactor));
+            int baseCompensation = (int)(TargetQuest.BaseReward * 1.5f * (1 + riskFactor));
+
+            // Slider 50 referans alınarak oran hesaplanır.
+            // Slider artarsa (örn. 80), prim artar (+%60), tazminat azalır (-%60).
+            float sliderMultiplier = (SliderValue - 50) / 50f; // -0.98 ile 1.0 arası
+
+            Premium = (int)(basePremium * (1 + sliderMultiplier));
+            Compensation = (int)(baseCompensation * (1 - sliderMultiplier));
+        }
+
+        protected bool _effectsApplied = false;
+
+        // Yan etkiler Submit Offer sırasında çağrılır
+        public virtual void ApplyPolicyEffects()
+        {
+            if (_effectsApplied) return;
+
+            // Eğer teklif oyuncu lehine çok riskli/kârlı ise (Örn Slider > 80), karakter strese girer
+            if (SliderValue > 80)
+            {
+                // Kırmızı bölge: Orantılı olarak stres ekle
+                int stressPenalty = (SliderValue - 80) / 2;
+                InsuredCharacter.Stress += stressPenalty;
+            }
+
+            _effectsApplied = true;
         }
 
         // Matematiksel Risk Fonksiyonu

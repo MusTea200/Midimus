@@ -10,12 +10,12 @@ namespace GameSystems.CharacterSystem
 
     public enum TraitType
     {
-        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable
+        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious
     }
 
     public enum InteractionType
     {
-        ForceDiet, HardTraining, ForceSocialize, OfferRest, GiveFavoriteFood
+        ForceDiet, HardTraining, ForceSocialize, OfferRest, GiveFavoriteFood, BadInsuranceOffer
     }
 
     public class Character
@@ -30,11 +30,21 @@ namespace GameSystems.CharacterSystem
         public int Stress
         {
             get => _stress;
-            private set => _stress = Math.Clamp(value, 0, 100);
+            set => _stress = Math.Clamp(value, 0, 100);
+        }
+
+        private int _patience;
+        public int Patience
+        {
+            get => _patience;
+            set => _patience = Math.Clamp(value, 0, 5);
         }
 
         // Uyum seviyesi: Stres arttıkça oyuncunun kararlarına itaati düşer (0.0f - 1.0f)
         public float Compliance => 1.0f - (Stress / 100f);
+
+        // Karakterin istediği ideal kâr/zarar oranı (0.0 - 1.0 arası bir değer olarak tutulabilir, ancak Slider üzerinden hesaplanacak)
+        public float IdealOfferRatio { get; set; } = 0.5f;
 
         public Character(string name)
         {
@@ -44,6 +54,7 @@ namespace GameSystems.CharacterSystem
             Traits = new List<TraitType>();
             RedLines = new Dictionary<InteractionType, bool>();
             Stress = 0;
+            Patience = new Random().Next(2, 6); // 2-5 arası rastgele sabır
 
             // Yetenekleri varsayılan olarak başlat
             foreach (AttributeType attr in Enum.GetValues(typeof(AttributeType)))
