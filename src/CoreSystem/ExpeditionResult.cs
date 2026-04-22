@@ -8,7 +8,8 @@ namespace GameSystems.CoreSystem
         InstantWin,
         InstantLoss,
         Borderline,
-        NormalBounce
+        NormalBounce,
+        MiracleBounce
     }
 
     public class ExpeditionResult

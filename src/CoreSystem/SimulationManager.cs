@@ -74,6 +74,15 @@ namespace GameSystems.CoreSystem
                 }
             }
 
+            // Mucize Kontrolü: Görev başarısız ama karakterde MiracleReady varsa, ölümden döner.
+            if (!isSuccess && policy.InsuredCharacter.MiracleReady)
+            {
+                isSuccess = true;
+                animType = AnimationTriggerType.MiracleBounce;
+                policy.InsuredCharacter.MiracleReady = false; // Mucize harcandı
+                Console.WriteLine($"{policy.InsuredCharacter.Name} ölümcül bir darbe aldı ama Mucize sayesinde hayatta kaldı!");
+            }
+
             return new ExpeditionResult(policy, isSuccess, animType);
         }
 

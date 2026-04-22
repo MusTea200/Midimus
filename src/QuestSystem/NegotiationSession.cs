@@ -37,6 +37,12 @@ namespace GameSystems.QuestSystem
             // Kabul aralığı: Karakterin toleransını stres ve sabır belirler
             float tolerance = 0.1f + (Customer.Patience * 0.05f) - (Customer.Stress / 500f);
 
+            // Fobisi olan karakterler sigorta anlaşmalarına daha güvensiz ve zor ikna olurlar
+            if (Customer.Phobias.Count > 0)
+            {
+                tolerance -= (Customer.Phobias.Count * 0.05f);
+            }
+
             if (difference <= tolerance)
             {
                 // Teklif karakter için uygun

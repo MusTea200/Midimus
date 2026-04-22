@@ -13,6 +13,14 @@ namespace GameSystems.CharacterSystem
         Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious
     }
 
+    public enum PhobiaType
+    {
+        Claustrophobia, // Kapalı alan korkusu (Zindan)
+        Arachnophobia,  // Örümcek korkusu
+        Nyctophobia,    // Karanlık korkusu
+        Hemophobia      // Kan korkusu
+    }
+
     public enum InteractionType
     {
         ForceDiet, HardTraining, ForceSocialize, OfferRest, GiveFavoriteFood, BadInsuranceOffer
@@ -24,13 +32,48 @@ namespace GameSystems.CharacterSystem
         public string Name { get; private set; }
         public Dictionary<AttributeType, int> Attributes { get; private set; } // 1-100 arası
         public List<TraitType> Traits { get; private set; }
+        public List<PhobiaType> Phobias { get; private set; }
         public Dictionary<InteractionType, bool> RedLines { get; private set; } // True: Kırmızı çizgi, False: Sevdiği eylem
+
+        public bool MiracleReady { get; set; }
 
         private int _stress;
         public int Stress
         {
             get => _stress;
-            set => _stress = Math.Clamp(value, 0, 100);
+            set
+            {
+                _stress = Math.Clamp(value, -100, 100);
+                CheckPsychologicalThresholds();
+            }
+        }
+
+        private void CheckPsychologicalThresholds()
+        {
+            if (_stress >= 90)
+            {
+                Array values = Enum.GetValues(typeof(PhobiaType));
+                object? randomValue = values.GetValue(new Random().Next(values.Length));
+                if (randomValue == null) return;
+
+                PhobiaType randomPhobia = (PhobiaType)randomValue;
+
+                if (!Phobias.Contains(randomPhobia))
+                {
+                    Phobias.Add(randomPhobia);
+                    Console.WriteLine($"{Name} aşırı stresten ötürü yeni bir fobi kazandı: {randomPhobia}!");
+                    _stress = 50; // Krizi atlattıktan sonra stres biraz dengelenir
+                }
+            }
+            else if (_stress <= -90)
+            {
+                if (!MiracleReady)
+                {
+                    MiracleReady = true;
+                    Console.WriteLine($"{Name} aşırı sadakat ve huzur hissiyle bir 'Mucize' (MiracleReady) kazandı!");
+                    _stress = -50; // Mucize kazanımı sonrası durum dengelenir
+                }
+            }
         }
 
         private int _patience;
@@ -52,8 +95,10 @@ namespace GameSystems.CharacterSystem
             Name = name;
             Attributes = new Dictionary<AttributeType, int>();
             Traits = new List<TraitType>();
+            Phobias = new List<PhobiaType>();
             RedLines = new Dictionary<InteractionType, bool>();
             Stress = 0;
+            MiracleReady = false;
             Patience = new Random().Next(2, 6); // 2-5 arası rastgele sabır
 
             // Yetenekleri varsayılan olarak başlat
