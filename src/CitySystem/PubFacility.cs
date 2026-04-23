@@ -14,6 +14,25 @@ namespace GameSystems.CitySystem
             _rng = new Random();
         }
 
+        public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager)
+        {
+            if (Ledger.MainBalance < GoldCost)
+            {
+                Console.WriteLine($"Sosyalleşmek için yeterli altın yok. Gereken: {GoldCost}, Mevcut: {Ledger.MainBalance}");
+                return;
+            }
+
+            Ledger.DeductBalance(GoldCost);
+
+            ApplyRehabEffects(charA);
+            ApplyRehabEffects(charB);
+
+            RelationshipBond bond = relationshipManager.GetOrCreateBond(charA, charB);
+            bond.BondLevel += 1;
+
+            Console.WriteLine($"{charA.Name} ve {charB.Name} Pubda sosyalleşti! Bağ seviyesi {bond.BondLevel} oldu.");
+        }
+
         protected override void ApplyRehabEffects(Character character)
         {
             double roll = _rng.NextDouble();

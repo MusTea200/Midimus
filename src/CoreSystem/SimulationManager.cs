@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GameSystems.QuestSystem;
+using GameSystems.CharacterSystem;
 
 namespace GameSystems.CoreSystem
 {
@@ -103,6 +104,18 @@ namespace GameSystems.CoreSystem
             }
 
             Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
+            if (isSuccess)
+            {
+                Array materials = Enum.GetValues(typeof(CraftingMaterial));
+                int numMaterialTypes = _rng.Next(1, 4);
+                for (int i = 0; i < numMaterialTypes; i++)
+                {
+                    CraftingMaterial randomMat = (CraftingMaterial)materials.GetValue(_rng.Next(materials.Length))!;
+                    int amount = (int)(_rng.Next(1, policy.TargetQuest.DifficultyLevel * 2 + 2));
+                    if (lootedMaterials.ContainsKey(randomMat)) lootedMaterials[randomMat] += amount;
+                    else lootedMaterials.Add(randomMat, amount);
+                }
+            }
 
             // Başarılı bir zindan gezisi sonrası rastgele ganimet (Loot)
             if (isSuccess)
@@ -156,6 +169,137 @@ namespace GameSystems.CoreSystem
             float chance = (1f - baseDanger - statPenalty) * complianceFactor;
 
             return Math.Clamp(chance, 0f, 1f);
+        }
+
+        public ExpeditionResult ProcessDuoExpedition(Character charA, Character charB, InsurancePolicy policy, RelationshipManager relationshipManager)
+        {
+            RelationshipBond? bond = relationshipManager.GetBond(charA, charB);
+            int bondLevel = bond?.BondLevel ?? 0;
+
+            float baseSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
+            float baseSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
+            float successProbability = (baseSuccessA + baseSuccessB) / 2f;
+
+            bool isSuccess = false;
+            AnimationTriggerType animType = AnimationTriggerType.NormalBounce;
+            float lootMultiplier = 1.0f;
+
+            Dictionary<AttributeType, int> originalStatsA = new Dictionary<AttributeType, int>();
+            Dictionary<AttributeType, int> originalStatsB = new Dictionary<AttributeType, int>();
+
+            if (bondLevel >= 1)
+            {
+                // Temp stat buff
+                Array attributes = Enum.GetValues(typeof(AttributeType));
+
+                var eligibleStatsA = new List<AttributeType>();
+                foreach (AttributeType attr in attributes)
+                    if (charA.Attributes.ContainsKey(attr) && charA.Attributes[attr] < 100)
+                        eligibleStatsA.Add(attr);
+                if (eligibleStatsA.Count > 0)
+                {
+                    AttributeType buffStat = eligibleStatsA[_rng.Next(eligibleStatsA.Count)];
+                    originalStatsA[buffStat] = charA.Attributes[buffStat];
+                    charA.Attributes[buffStat] = (int)(charA.Attributes[buffStat] * 1.20f);
+                }
+
+                var eligibleStatsB = new List<AttributeType>();
+                foreach (AttributeType attr in attributes)
+                    if (charB.Attributes.ContainsKey(attr) && charB.Attributes[attr] < 100)
+                        eligibleStatsB.Add(attr);
+                if (eligibleStatsB.Count > 0)
+                {
+                    AttributeType buffStat = eligibleStatsB[_rng.Next(eligibleStatsB.Count)];
+                    originalStatsB[buffStat] = charB.Attributes[buffStat];
+                    charB.Attributes[buffStat] = (int)(charB.Attributes[buffStat] * 1.20f);
+                }
+            }
+
+                        float tempSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
+            float tempSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
+            successProbability = (tempSuccessA + tempSuccessB) / 2f;
+
+            if (bondLevel >= 5) successProbability += 0.10f;
+
+            if (bondLevel >= 5) successProbability += 0.10f;
+
+            if (bondLevel == 10)
+            {
+                bool aIsMonster = charA.Gender == GenderType.MaleMonster || charA.Gender == GenderType.FemaleMonster;
+                bool bIsMonster = charB.Gender == GenderType.MaleMonster || charB.Gender == GenderType.FemaleMonster;
+
+                if (charA.Gender == GenderType.Male && charB.Gender == GenderType.Male)
+                {
+                    successProbability += 0.15f;
+                    lootMultiplier = 1.50f;
+                }
+                else if ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Female) ||
+                         (charA.Gender == GenderType.Female && charB.Gender == GenderType.Male))
+                {
+                    successProbability += 0.40f;
+                }
+                else if ((!aIsMonster && bIsMonster) || (aIsMonster && !bIsMonster))
+                {
+                    // Güzel ve Çirkin - logic applied in stress section
+                }
+                else if (aIsMonster && bIsMonster)
+                {
+                    foreach (AttributeType attr in Enum.GetValues(typeof(AttributeType)))
+                    {
+                        if (charA.Attributes.ContainsKey(attr))
+                        {
+                            originalStatsA[attr] = charA.Attributes[attr];
+                            charA.Attributes[attr] *= 2;
+                        }
+                        if (charB.Attributes.ContainsKey(attr))
+                        {
+                            originalStatsB[attr] = charB.Attributes[attr];
+                            charB.Attributes[attr] *= 2;
+                        }
+                    }
+                }
+            }
+
+                        float finalSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
+            float finalSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
+            successProbability = Math.Clamp((finalSuccessA + finalSuccessB) / 2f + (bondLevel >= 5 ? 0.10f : 0f) + (bondLevel == 10 && ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Male) || (charA.Gender == GenderType.Male && charB.Gender == GenderType.Female) || (charA.Gender == GenderType.Female && charB.Gender == GenderType.Male)) ? ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Male) ? 0.15f : 0.40f) : 0f), 0f, 1f);
+            isSuccess = _rng.NextDouble() <= successProbability;
+
+            if (!isSuccess)
+            {
+                int stressPenalty = bondLevel >= 1 ? 15 : 30;
+                bool aIsMonster = charA.Gender == GenderType.MaleMonster || charA.Gender == GenderType.FemaleMonster;
+                bool bIsMonster = charB.Gender == GenderType.MaleMonster || charB.Gender == GenderType.FemaleMonster;
+
+                if (bondLevel == 10 && ((!aIsMonster && bIsMonster) || (aIsMonster && !bIsMonster)))
+                {
+                    if (aIsMonster) charA.Stress += stressPenalty * 2;
+                    else charB.Stress += stressPenalty * 2;
+                }
+                else
+                {
+                    charA.Stress += stressPenalty;
+                    charB.Stress += stressPenalty;
+                }
+            }
+
+            foreach (var kvp in originalStatsA) charA.Attributes[kvp.Key] = kvp.Value;
+            foreach (var kvp in originalStatsB) charB.Attributes[kvp.Key] = kvp.Value;
+
+            Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
+            if (isSuccess)
+            {
+                Array materials = Enum.GetValues(typeof(CraftingMaterial));
+                int numMaterialTypes = _rng.Next(1, 4);
+                for (int i = 0; i < numMaterialTypes; i++)
+                {
+                    CraftingMaterial randomMat = (CraftingMaterial)materials.GetValue(_rng.Next(materials.Length))!;
+                    int amount = (int)(_rng.Next(1, policy.TargetQuest.DifficultyLevel * 2 + 2) * lootMultiplier);
+                    if (lootedMaterials.ContainsKey(randomMat)) lootedMaterials[randomMat] += amount;
+                    else lootedMaterials.Add(randomMat, amount);
+                }
+            }
+            return new ExpeditionResult(policy, isSuccess, animType, lootedMaterials);
         }
     }
 }
