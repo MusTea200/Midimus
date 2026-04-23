@@ -83,7 +83,35 @@ namespace GameSystems.CoreSystem
                 Console.WriteLine($"{policy.InsuredCharacter.Name} ölümcül bir darbe aldı ama Mucize sayesinde hayatta kaldı!");
             }
 
-            return new ExpeditionResult(policy, isSuccess, animType);
+            Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
+
+            // Başarılı bir zindan gezisi sonrası rastgele ganimet (Loot)
+            if (isSuccess)
+            {
+                Array materials = Enum.GetValues(typeof(CraftingMaterial));
+
+                // 1 ila 3 farklı çeşit materyal düşsün
+                int numMaterialTypes = _rng.Next(1, 4);
+
+                for (int i = 0; i < numMaterialTypes; i++)
+                {
+                    CraftingMaterial randomMat = (CraftingMaterial)materials.GetValue(_rng.Next(materials.Length))!;
+
+                    // Zorluğa göre düşen miktar
+                    int amount = _rng.Next(1, policy.TargetQuest.DifficultyLevel * 2 + 2);
+
+                    if (lootedMaterials.ContainsKey(randomMat))
+                    {
+                        lootedMaterials[randomMat] += amount;
+                    }
+                    else
+                    {
+                        lootedMaterials.Add(randomMat, amount);
+                    }
+                }
+            }
+
+            return new ExpeditionResult(policy, isSuccess, animType, lootedMaterials);
         }
 
         private float CalculateSuccessProbability(InsurancePolicy policy)

@@ -11,9 +11,16 @@ namespace GameSystems.StorySystem
             StoryManager manager,
             DailyLedger ledger,
             PlayerManager player,
+            GamePhaseManager phaseManager,
             Character currentCharacter,
             List<Character> allActiveCharacters)
         {
+            if (!phaseManager.IsCityPhaseUnlocked)
+            {
+                // Sandık senaryosu sadece Şehir Fazı açıkken tetiklenebilir
+                return;
+            }
+
             GlobalStoryState state = manager.GlobalState;
             Random rng = new Random();
 

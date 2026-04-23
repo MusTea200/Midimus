@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using GameSystems.QuestSystem;
 
 namespace GameSystems.CoreSystem
@@ -21,11 +22,14 @@ namespace GameSystems.CoreSystem
         // Ledger'da gösterilecek tutar (Başarıysa Prim +, Başarısızlıksa Tazminat -)
         public int LedgerAmount => IsSuccess ? Policy.Premium : -Policy.Compensation;
 
-        public ExpeditionResult(InsurancePolicy policy, bool isSuccess, AnimationTriggerType animState)
+        public Dictionary<CraftingMaterial, int> LootedMaterials { get; private set; }
+
+        public ExpeditionResult(InsurancePolicy policy, bool isSuccess, AnimationTriggerType animState, Dictionary<CraftingMaterial, int>? lootedMaterials = null)
         {
             Policy = policy;
             IsSuccess = isSuccess;
             AnimationState = animState;
+            LootedMaterials = lootedMaterials ?? new Dictionary<CraftingMaterial, int>();
         }
     }
 }
