@@ -18,6 +18,16 @@ namespace GameSystems.CoreSystem
             _pendingLedgerItems = new Queue<ExpeditionResult>();
         }
 
+        public void DeductBalance(int amount)
+        {
+            MainBalance -= amount;
+        }
+
+        public void AddBalance(int amount)
+        {
+            MainBalance += amount;
+        }
+
         public void LoadDailyResults(List<ExpeditionResult> dailyResults)
         {
             _pendingLedgerItems.Clear();
@@ -44,6 +54,14 @@ namespace GameSystems.CoreSystem
             }
 
             return false; // Liste boş
+        }
+
+        // Gün sonunda emlak gelirleri ve giderlerini topluca ledger'a yansıt
+        public void ApplyRealEstateEconomics(int dailyCommissions, int dailyMaintenanceCosts)
+        {
+            MainBalance += dailyCommissions;
+            MainBalance -= dailyMaintenanceCosts;
+            Console.WriteLine($"Emlak Bilançosu: +{dailyCommissions} Gelir, -{dailyMaintenanceCosts} Gider. Yeni Bakiye: {MainBalance}");
         }
 
         public void NextDay()
