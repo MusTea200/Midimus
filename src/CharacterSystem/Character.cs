@@ -18,7 +18,8 @@ namespace GameSystems.CharacterSystem
         Claustrophobia, // Kapalı alan korkusu (Zindan)
         Arachnophobia,  // Örümcek korkusu
         Nyctophobia,    // Karanlık korkusu
-        Hemophobia      // Kan korkusu
+        Hemophobia,     // Kan korkusu
+        Pyrophobia      // Ateş korkusu
     }
 
     public enum InteractionType
