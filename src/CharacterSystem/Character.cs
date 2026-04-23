@@ -10,7 +10,7 @@ namespace GameSystems.CharacterSystem
 
     public enum TraitType
     {
-        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious
+        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish
     }
 
     public enum PhobiaType
@@ -83,7 +83,7 @@ namespace GameSystems.CharacterSystem
         public int Patience
         {
             get => _patience;
-            set => _patience = Math.Clamp(value, 0, 5);
+            set => _patience = Math.Clamp(value, 0, 100);
         }
 
         // Uyum seviyesi: Stres arttıkça oyuncunun kararlarına itaati düşer (0.0f - 1.0f)
