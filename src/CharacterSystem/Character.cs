@@ -38,6 +38,8 @@ namespace GameSystems.CharacterSystem
 
         public bool MiracleReady { get; set; }
 
+        public Mount? ActiveMount { get; set; }
+
         private int _stress;
         public int Stress
         {

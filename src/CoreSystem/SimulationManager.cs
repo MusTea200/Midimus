@@ -83,6 +83,25 @@ namespace GameSystems.CoreSystem
                 Console.WriteLine($"{policy.InsuredCharacter.Name} ölümcül bir darbe aldı ama Mucize sayesinde hayatta kaldı!");
             }
 
+            // Stres ve Binek (Mount) Hasar Azaltma Mantığı
+            if (!isSuccess || animType == AnimationTriggerType.Borderline)
+            {
+                // Standart Görev Stresi (Borderline 15, InstantLoss 50, NormalLoss 30)
+                int baseStressDamage = 30;
+                if (animType == AnimationTriggerType.Borderline) baseStressDamage = 15;
+                if (animType == AnimationTriggerType.InstantLoss) baseStressDamage = 50;
+
+                // Eğer karakterin bineği varsa hasarı azalt
+                if (policy.InsuredCharacter.ActiveMount != null)
+                {
+                    float reduction = policy.InsuredCharacter.ActiveMount.StressReductionPercentage;
+                    baseStressDamage = (int)(baseStressDamage * (1.0f - reduction));
+                    Console.WriteLine($"{policy.InsuredCharacter.Name}'nin bineği ({policy.InsuredCharacter.ActiveMount.Name}) sayesinde stres hasarı azaldı!");
+                }
+
+                policy.InsuredCharacter.Stress += baseStressDamage;
+            }
+
             Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
 
             // Başarılı bir zindan gezisi sonrası rastgele ganimet (Loot)
