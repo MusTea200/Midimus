@@ -28,7 +28,19 @@ namespace GameSystems.CitySystem
                 _ledger.DeductBalance(cost);
 
                 int randomBaseStat = _rng.Next(5, 21); // Rastgele stat
-                Item mysteryItem = new Item($"Gizemli Kutu Eşyası #{_rng.Next(100, 999)}", randomBaseStat);
+                Item mysteryItem;
+                if (_rng.NextDouble() <= 0.30)
+                {
+                    int curseType = _rng.Next(0, 3);
+                    if (curseType == 0) mysteryItem = new Item("Çivili Kefen", randomBaseStat);
+                    else if (curseType == 1) mysteryItem = new Item("Kör Öfke Yüzüğü", randomBaseStat);
+                    else mysteryItem = new Item("Midas'ın Prangası", randomBaseStat);
+                    mysteryItem.IsCursed = true;
+                }
+                else
+                {
+                    mysteryItem = new Item($"Gizemli Kutu Eşyası #{_rng.Next(100, 999)}", randomBaseStat);
+                }
 
                 // Karaborsadan alınan eşyalar %100 Unidentified ve rastgele Broken
                 mysteryItem.IsUnidentified = true;

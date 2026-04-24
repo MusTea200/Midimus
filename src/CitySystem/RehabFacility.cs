@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using GameSystems.CharacterSystem;
 using GameSystems.CoreSystem;
 
@@ -23,6 +24,12 @@ namespace GameSystems.CitySystem
 
         public virtual bool RelaxCharacter(Character character)
         {
+            if (character.EquippedItems.Any(i => i.ItemName == "Midas'ın Prangası"))
+            {
+                Console.WriteLine($"{character.Name} Midas'ın Prangası'nın etkisi altında! Eğlence tesislerine giremez.");
+                return false;
+            }
+
             if (Ledger.MainBalance < GoldCost)
             {
                 Console.WriteLine($"Rehabilitasyon için yeterli altın yok. Gereken: {GoldCost}, Mevcut: {Ledger.MainBalance}");

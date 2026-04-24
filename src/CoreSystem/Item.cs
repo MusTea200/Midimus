@@ -7,6 +7,8 @@ namespace GameSystems.CoreSystem
         public string ItemName { get; private set; }
         public bool IsUnidentified { get; set; }
         public bool IsBroken { get; set; }
+        public bool IsCursed { get; set; }
+        public bool IsBound { get; set; }
 
         public int BaseStatValue { get; private set; }
         public int RevealedStatValue { get; set; }
@@ -18,6 +20,8 @@ namespace GameSystems.CoreSystem
             BaseStatValue = baseStatValue;
             IsUnidentified = true;
             IsBroken = false;
+            IsCursed = false;
+            IsBound = false;
             RevealedStatValue = 0;
             ElementalDamage = 0;
         }

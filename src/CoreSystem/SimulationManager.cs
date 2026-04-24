@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using GameSystems.QuestSystem;
 using GameSystems.CharacterSystem;
@@ -101,6 +102,12 @@ namespace GameSystems.CoreSystem
                 }
 
                 policy.InsuredCharacter.Stress += baseStressDamage;
+                if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen"))
+                {
+                    if (policy.InsuredCharacter.Attributes.ContainsKey(AttributeType.Endurance)) policy.InsuredCharacter.Attributes[AttributeType.Endurance] -= baseStressDamage;
+                    else policy.InsuredCharacter.Attributes[AttributeType.Endurance] = -baseStressDamage;
+                    Console.WriteLine($"{policy.InsuredCharacter.Name}'nin Çivili Kefen'i {baseStressDamage} kalıcı Endurance statına mal oldu!");
+                }
             }
 
             Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
@@ -167,6 +174,7 @@ namespace GameSystems.CoreSystem
 
             // Başarı şansı = (1 - Tehlike - Stat Eksikliği) * Karakterin Uyumu
             float chance = (1f - baseDanger - statPenalty) * complianceFactor;
+            if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen")) chance = 0.90f;
 
             return Math.Clamp(chance, 0f, 1f);
         }
@@ -175,6 +183,16 @@ namespace GameSystems.CoreSystem
         {
             RelationshipBond? bond = relationshipManager.GetBond(charA, charB);
             int bondLevel = bond?.BondLevel ?? 0;
+            if (charA.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü") && _rng.NextDouble() <= 0.30)
+            {
+                Console.WriteLine($"{charA.Name}'nin Kör Öfke Yüzüğü parladı! {charB.Name}'a saldırdı (+30 Stres).");
+                charB.Stress += 30;
+            }
+            if (charB.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü") && _rng.NextDouble() <= 0.30)
+            {
+                Console.WriteLine($"{charB.Name}'nin Kör Öfke Yüzüğü parladı! {charA.Name}'a saldırdı (+30 Stres).");
+                charA.Stress += 30;
+            }
 
             float baseSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
             float baseSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
@@ -217,11 +235,11 @@ namespace GameSystems.CoreSystem
 
                         float tempSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
             float tempSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
-            successProbability = (tempSuccessA + tempSuccessB) / 2f;
+            float tempSuccessProbability = (tempSuccessA + tempSuccessB) / 2f;
 
-            if (bondLevel >= 5) successProbability += 0.10f;
 
-            if (bondLevel >= 5) successProbability += 0.10f;
+
+            if (bondLevel >= 5) tempSuccessProbability += 0.10f;
 
             if (bondLevel == 10)
             {
@@ -230,13 +248,13 @@ namespace GameSystems.CoreSystem
 
                 if (charA.Gender == GenderType.Male && charB.Gender == GenderType.Male)
                 {
-                    successProbability += 0.15f;
+                    tempSuccessProbability += 0.15f;
                     lootMultiplier = 1.50f;
                 }
                 else if ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Female) ||
                          (charA.Gender == GenderType.Female && charB.Gender == GenderType.Male))
                 {
-                    successProbability += 0.40f;
+                    tempSuccessProbability += 0.40f;
                 }
                 else if ((!aIsMonster && bIsMonster) || (aIsMonster && !bIsMonster))
                 {
@@ -262,7 +280,7 @@ namespace GameSystems.CoreSystem
 
                         float finalSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
             float finalSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
-            successProbability = Math.Clamp((finalSuccessA + finalSuccessB) / 2f + (bondLevel >= 5 ? 0.10f : 0f) + (bondLevel == 10 && ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Male) || (charA.Gender == GenderType.Male && charB.Gender == GenderType.Female) || (charA.Gender == GenderType.Female && charB.Gender == GenderType.Male)) ? ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Male) ? 0.15f : 0.40f) : 0f), 0f, 1f);
+            successProbability = Math.Clamp(tempSuccessProbability, 0f, 1f);
             isSuccess = _rng.NextDouble() <= successProbability;
 
             if (!isSuccess)
