@@ -43,6 +43,7 @@ namespace GameSystems.CharacterSystem
         public Dictionary<InteractionType, bool> RedLines { get; private set; } // True: Kırmızı çizgi, False: Sevdiği eylem
 
         public bool MiracleReady { get; set; }
+        public int Exp { get; set; }
 
         public Mount? ActiveMount { get; set; }
 
@@ -110,6 +111,7 @@ namespace GameSystems.CharacterSystem
             Phobias = new List<PhobiaType>();
             RedLines = new Dictionary<InteractionType, bool>();
             Stress = 0;
+            Exp = 0;
             MiracleReady = false;
             Patience = new Random().Next(2, 6); // 2-5 arası rastgele sabır
 
