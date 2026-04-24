@@ -9,6 +9,7 @@ namespace GameSystems.CoreSystem
         Silver,
         Gold,
         DragonScale,
-        MagicDust
+        MagicDust,
+        Slime_Core
     }
 }
