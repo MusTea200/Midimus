@@ -15,7 +15,7 @@ namespace GameSystems.CharacterSystem
 
     public enum TraitType
     {
-        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish
+        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish, Deja_Vu, Trust_Issues
     }
 
     public enum PhobiaType
