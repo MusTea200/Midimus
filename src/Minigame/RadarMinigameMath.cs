@@ -7,6 +7,9 @@ namespace GameSystems.Minigame
 {
     public static class RadarMinigameMath
     {
+        // ⚡ Bolt: Cache enum values to avoid reflection and array allocation on every call
+        private static readonly AttributeType[] CachedAttributes = (AttributeType[])Enum.GetValues(typeof(AttributeType));
+
         /// <summary>
         /// Verilen yetenek değerlerine göre sekizgenin köşe koordinatlarını (Vector2) hesaplar.
         /// Her yetenek 45 derecelik (Pi/4) açılarla dizilir.
@@ -16,11 +19,15 @@ namespace GameSystems.Minigame
             Vector2[] vertices = new Vector2[8];
             float angleStep = (float)(Math.PI / 4); // 45 Derece
 
-            int index = 0;
-            foreach (AttributeType attr in Enum.GetValues(typeof(AttributeType)))
+            // ⚡ Bolt: Use a for loop over cached array instead of foreach over Enum.GetValues
+            // This prevents both enumerator allocations and reflection overhead
+            for (int index = 0; index < CachedAttributes.Length; index++)
             {
+                AttributeType attr = CachedAttributes[index];
+
+                // ⚡ Bolt: Replace ContainsKey + indexer with TryGetValue to halve dictionary lookups
                 // Yarıçap (Radius) yetenek puanı olarak alınır (Örn: 100 max)
-                float radius = attributes.ContainsKey(attr) ? attributes[attr] : 0;
+                float radius = attributes.TryGetValue(attr, out int val) ? val : 0;
                 float angle = index * angleStep;
 
                 // X ve Y koordinatlarının trigonometrik hesabı
@@ -28,7 +35,6 @@ namespace GameSystems.Minigame
                     (float)(Math.Cos(angle) * radius),
                     (float)(Math.Sin(angle) * radius)
                 );
-                index++;
             }
             return vertices;
         }
