@@ -39,6 +39,7 @@ namespace GameSystems.CharacterSystem
         public GenderType Gender { get; private set; }
         public Dictionary<AttributeType, int> Attributes { get; private set; } // 1-100 arası
         public List<TraitType> Traits { get; private set; }
+        public List<UpgradeableTrait> AdvancedTraits { get; private set; }
         public List<PhobiaType> Phobias { get; private set; }
         public Dictionary<InteractionType, bool> RedLines { get; private set; } // True: Kırmızı çizgi, False: Sevdiği eylem
 
@@ -108,6 +109,7 @@ namespace GameSystems.CharacterSystem
 
             Attributes = new Dictionary<AttributeType, int>();
             Traits = new List<TraitType>();
+            AdvancedTraits = new List<UpgradeableTrait>();
             Phobias = new List<PhobiaType>();
             RedLines = new Dictionary<InteractionType, bool>();
             Stress = 0;
