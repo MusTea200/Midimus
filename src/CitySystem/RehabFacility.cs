@@ -24,9 +24,9 @@ namespace GameSystems.CitySystem
 
         public virtual bool RelaxCharacter(Character character)
         {
-            if (character.EquippedItems.Any(i => i.ItemName == "Midas'ın Prangası"))
+            if (character.EquippedItems.Any(i => i.ItemName == "Midas'ın Gözyaşı"))
             {
-                Console.WriteLine($"{character.Name} Midas'ın Prangası'nın etkisi altında! Eğlence tesislerine giremez.");
+                Console.WriteLine($"{character.Name} Midas'ın Gözyaşı'nın etkisi altında! Eğlence tesislerine giremez.");
                 return false;
             }
 

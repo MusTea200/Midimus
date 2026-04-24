@@ -21,7 +21,7 @@ namespace GameSystems.CoreSystem
         public AnimationTriggerType AnimationState { get; private set; }
 
         // Ledger'da gösterilecek tutar (Başarıysa Prim +, Başarısızlıksa Tazminat -)
-        public int LedgerAmount => IsSuccess ? (Policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Midas'ın Prangası") ? Policy.Premium * 3 : Policy.Premium) : -Policy.Compensation;
+        public int LedgerAmount => IsSuccess ? (Policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Midas'ın Gözyaşı") ? Policy.Premium * 3 : Policy.Premium) : -Policy.Compensation;
 
         public Dictionary<CraftingMaterial, int> LootedMaterials { get; private set; }
 

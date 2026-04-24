@@ -34,7 +34,7 @@ namespace GameSystems.CitySystem
                     int curseType = _rng.Next(0, 3);
                     if (curseType == 0) mysteryItem = new Item("Çivili Kefen", randomBaseStat);
                     else if (curseType == 1) mysteryItem = new Item("Kör Öfke Yüzüğü", randomBaseStat);
-                    else mysteryItem = new Item("Midas'ın Prangası", randomBaseStat);
+                    else mysteryItem = new Item("Midas'ın Gözyaşı", randomBaseStat);
                     mysteryItem.IsCursed = true;
                 }
                 else

@@ -173,11 +173,11 @@ namespace GameSystems.CharacterSystem
                     Attributes[AttributeType.Intelligence] = 0;
                     Console.WriteLine($"{Name} kör edici bir öfkeyle doldu! (+50 Strength, Willpower & Intelligence 0 oldu).");
                 }
-                else if (item.ItemName == "Midas'ın Prangası")
+                else if (item.ItemName == "Midas'ın Gözyaşı")
                 {
                     Attributes[AttributeType.Charisma] = 0;
                     Attributes[AttributeType.Luck] = 0;
-                    Console.WriteLine($"{Name} Midas'ın Prangası'na takıldı! (Charisma & Luck 0 oldu).");
+                    Console.WriteLine($"{Name} Midas'ın Gözyaşı'na takıldı! (Charisma & Luck 0 oldu).");
                 }
             }
             EquippedItems.Add(item);
