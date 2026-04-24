@@ -8,9 +8,14 @@ namespace GameSystems.CharacterSystem
         Strength, Agility, Intelligence, Luck, Endurance, Charisma, Perception, Willpower
     }
 
+    public enum GenderType
+    {
+        Male, Female, MaleMonster, FemaleMonster
+    }
+
     public enum TraitType
     {
-        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious
+        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish
     }
 
     public enum PhobiaType
@@ -31,6 +36,7 @@ namespace GameSystems.CharacterSystem
     {
         public string Id { get; private set; }
         public string Name { get; private set; }
+        public GenderType Gender { get; private set; }
         public Dictionary<AttributeType, int> Attributes { get; private set; } // 1-100 arası
         public List<TraitType> Traits { get; private set; }
         public List<PhobiaType> Phobias { get; private set; }
@@ -83,7 +89,7 @@ namespace GameSystems.CharacterSystem
         public int Patience
         {
             get => _patience;
-            set => _patience = Math.Clamp(value, 0, 5);
+            set => _patience = Math.Clamp(value, 0, 100);
         }
 
         // Uyum seviyesi: Stres arttıkça oyuncunun kararlarına itaati düşer (0.0f - 1.0f)
@@ -96,6 +102,9 @@ namespace GameSystems.CharacterSystem
         {
             Id = Guid.NewGuid().ToString();
             Name = name;
+            Array genderValues = Enum.GetValues(typeof(GenderType));
+            Gender = (GenderType)genderValues.GetValue(new Random().Next(genderValues.Length))!;
+
             Attributes = new Dictionary<AttributeType, int>();
             Traits = new List<TraitType>();
             Phobias = new List<PhobiaType>();
