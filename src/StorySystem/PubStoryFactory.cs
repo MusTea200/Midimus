@@ -171,6 +171,12 @@ namespace GameSystems.StorySystem
                 {
                     case BrawlResult.Victory:
                         character.Stress -= 50;
+                        if (!character.Traits.Contains(TraitType.Brawler))
+                        {
+                            character.Traits.Add(TraitType.Brawler);
+                            if (character.Attributes.ContainsKey(AttributeType.Strength)) character.Attributes[AttributeType.Strength] += 5;
+                            else character.Attributes[AttributeType.Strength] = 5;
+                        }
                         Console.WriteLine($"{character.Name} pub'daki herkesi dövdü! Kahramanlık hissi stresi fena düşürdü (-50).");
                         break;
                     case BrawlResult.Defeat:
@@ -178,10 +184,22 @@ namespace GameSystems.StorySystem
                         int hospitalCost = 300;
                         if (ledger.MainBalance >= hospitalCost) ledger.DeductBalance(hospitalCost);
                         else ledger.DeductBalance(ledger.MainBalance);
+                        if (!character.Traits.Contains(TraitType.Bruised))
+                        {
+                            character.Traits.Add(TraitType.Bruised);
+                        }
                         Console.WriteLine($"{character.Name} fena dayak yedi. Stres +50 ve hastane masrafları kesildi.");
                         break;
                     case BrawlResult.Fled:
                         // Prestige düşüşü loglanabilir, stress değişmez
+                        if (!character.Traits.Contains(TraitType.Cowardly_Fast))
+                        {
+                            character.Traits.Add(TraitType.Cowardly_Fast);
+                            if (character.Attributes.ContainsKey(AttributeType.Agility)) character.Attributes[AttributeType.Agility] += 5;
+                            else character.Attributes[AttributeType.Agility] = 5;
+                            if (character.Attributes.ContainsKey(AttributeType.Charisma)) character.Attributes[AttributeType.Charisma] -= 5;
+                            else character.Attributes[AttributeType.Charisma] = -5;
+                        }
                         Console.WriteLine($"{character.Name} akıllıca davrandı ve kaçtı. Stres değişmedi ama prestiji çizildi.");
                         break;
                 }
