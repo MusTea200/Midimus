@@ -16,6 +16,12 @@ namespace GameSystems.CitySystem
 
         public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager)
         {
+            if (charA.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü") || charB.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü"))
+            {
+                Console.WriteLine("Bu karakter kimseyle bağ kuramayacak kadar öfkeli!");
+                return;
+            }
+
             if (Ledger.MainBalance < GoldCost)
             {
                 Console.WriteLine($"Sosyalleşmek için yeterli altın yok. Gereken: {GoldCost}, Mevcut: {Ledger.MainBalance}");

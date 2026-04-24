@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GameSystems.CoreSystem;
 
 namespace GameSystems.CharacterSystem
 {
@@ -8,15 +9,18 @@ namespace GameSystems.CharacterSystem
         Strength, Agility, Intelligence, Luck, Endurance, Charisma, Perception, Willpower
     }
 
+
     public enum GenderType
     {
         Male, Female, MaleMonster, FemaleMonster
     }
 
+
     public enum TraitType
     {
         Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish, Santas_Blessing, Broken_Heart, Iron_Liver, Hangover, Brawler, Bruised, Cowardly_Fast
     }
+
 
     public enum PhobiaType
     {
@@ -27,10 +31,12 @@ namespace GameSystems.CharacterSystem
         Pyrophobia      // Ateş korkusu
     }
 
+
     public enum InteractionType
     {
         ForceDiet, HardTraining, ForceSocialize, OfferRest, GiveFavoriteFood, BadInsuranceOffer
     }
+
 
     public class Character
     {
@@ -41,6 +47,7 @@ namespace GameSystems.CharacterSystem
         public List<TraitType> Traits { get; private set; }
         public List<UpgradeableTrait> AdvancedTraits { get; private set; }
         public List<PhobiaType> Phobias { get; private set; }
+        public List<Item> EquippedItems { get; private set; }
         public Dictionary<InteractionType, bool> RedLines { get; private set; } // True: Kırmızı çizgi, False: Sevdiği eylem
 
         public bool MiracleReady { get; set; }
@@ -111,6 +118,7 @@ namespace GameSystems.CharacterSystem
             Traits = new List<TraitType>();
             AdvancedTraits = new List<UpgradeableTrait>();
             Phobias = new List<PhobiaType>();
+            EquippedItems = new List<Item>();
             RedLines = new Dictionary<InteractionType, bool>();
             Stress = 0;
             Exp = 0;
@@ -146,6 +154,33 @@ namespace GameSystems.CharacterSystem
                 // Rastgele karar tetikleyicisi (Örn: Göreve gitmeyi reddetme, eşya kırma, zam isteme)
                 Console.WriteLine($"{Name} çok stresli! Otoriteye karşı geliyor...");
             }
+        }
+
+
+
+        public void EquipItem(Item item)
+        {
+            if (item.IsCursed && item.IsUnidentified)
+            {
+                item.IsBound = true;
+                Console.WriteLine($"MÜHÜRLENDİ! {item.ItemName} lanetli çıktı ve {Name}'in üzerine mühürlendi (Çıkarılamaz).");
+
+                if (item.ItemName == "Kör Öfke Yüzüğü")
+                {
+                    if (Attributes.ContainsKey(AttributeType.Strength)) Attributes[AttributeType.Strength] += 50;
+                    else Attributes[AttributeType.Strength] = 50;
+                    Attributes[AttributeType.Willpower] = 0;
+                    Attributes[AttributeType.Intelligence] = 0;
+                    Console.WriteLine($"{Name} kör edici bir öfkeyle doldu! (+50 Strength, Willpower & Intelligence 0 oldu).");
+                }
+                else if (item.ItemName == "Midas'ın Gözyaşı")
+                {
+                    Attributes[AttributeType.Charisma] = 0;
+                    Attributes[AttributeType.Luck] = 0;
+                    Console.WriteLine($"{Name} Midas'ın Gözyaşı'na takıldı! (Charisma & Luck 0 oldu).");
+                }
+            }
+            EquippedItems.Add(item);
         }
     }
 }

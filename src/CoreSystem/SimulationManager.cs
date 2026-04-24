@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using GameSystems.QuestSystem;
 using GameSystems.CharacterSystem;
@@ -101,6 +102,41 @@ namespace GameSystems.CoreSystem
                 }
 
                 policy.InsuredCharacter.Stress += baseStressDamage;
+                if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen"))
+                {
+                    if (policy.InsuredCharacter.Attributes.ContainsKey(AttributeType.Endurance)) policy.InsuredCharacter.Attributes[AttributeType.Endurance] -= baseStressDamage;
+                    else policy.InsuredCharacter.Attributes[AttributeType.Endurance] = -baseStressDamage;
+                    Console.WriteLine($"{policy.InsuredCharacter.Name}'nin Çivili Kefen'i {baseStressDamage} kalıcı Endurance statına mal oldu!");
+                }
+            }
+
+            // Berserker's Shroud increment and logic
+            if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen"))
+            {
+                var berserkTrait = policy.InsuredCharacter.AdvancedTraits.OfType<BerserkCurseTrait>().FirstOrDefault();
+                if (berserkTrait == null)
+                {
+                    berserkTrait = new BerserkCurseTrait();
+                    policy.InsuredCharacter.AdvancedTraits.Add(berserkTrait);
+                }
+                berserkTrait.IncrementExpedition(policy.InsuredCharacter);
+
+                // Apply stat drop temporarily or permanently depending on architecture
+                float statDrop = 0f;
+                if (berserkTrait.ExpeditionCount >= 15) statDrop = 0.90f;
+                else if (berserkTrait.ExpeditionCount >= 10) statDrop = 0.50f;
+                else if (berserkTrait.ExpeditionCount >= 1) statDrop = 0.10f;
+
+                if (statDrop > 0f)
+                {
+                    Console.WriteLine($"Çivili Kefen Laneti: Görev sonrası tüm temel statlar %{statDrop * 100} düştü!");
+                    // In a real system, you'd keep base stats intact and apply modifiers. Here we permanently drop for simplicity.
+                    var keys = new List<AttributeType>(policy.InsuredCharacter.Attributes.Keys);
+                    foreach (var key in keys)
+                    {
+                        policy.InsuredCharacter.Attributes[key] = (int)(policy.InsuredCharacter.Attributes[key] * (1.0f - statDrop));
+                    }
+                }
             }
 
             Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
@@ -167,17 +203,22 @@ namespace GameSystems.CoreSystem
 
             // Başarı şansı = (1 - Tehlike - Stat Eksikliği) * Karakterin Uyumu
             float chance = (1f - baseDanger - statPenalty) * complianceFactor;
+            if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen")) chance = 0.90f;
 
             return Math.Clamp(chance, 0f, 1f);
         }
 
         public ExpeditionResult ProcessDuoExpedition(Character charA, Character charB, InsurancePolicy policy, RelationshipManager relationshipManager)
         {
+            if (charA.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü") || charB.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü"))
+            {
+                throw new InvalidOperationException("Kör Öfke Yüzüğü takan bir karakter Duo göreve çıkamaz! Sadece Solo.");
+            }
             RelationshipBond? bond = relationshipManager.GetBond(charA, charB);
             int bondLevel = bond?.BondLevel ?? 0;
 
-            float baseSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
-            float baseSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
+            float baseSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest));
+            float baseSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest));
             float successProbability = (baseSuccessA + baseSuccessB) / 2f;
 
             bool isSuccess = false;
@@ -215,13 +256,13 @@ namespace GameSystems.CoreSystem
                 }
             }
 
-                        float tempSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
-            float tempSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
-            successProbability = (tempSuccessA + tempSuccessB) / 2f;
+                        float tempSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest));
+            float tempSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest));
+            float tempSuccessProbability = (tempSuccessA + tempSuccessB) / 2f;
 
-            if (bondLevel >= 5) successProbability += 0.10f;
 
-            if (bondLevel >= 5) successProbability += 0.10f;
+
+            if (bondLevel >= 5) tempSuccessProbability += 0.10f;
 
             if (bondLevel == 10)
             {
@@ -230,13 +271,13 @@ namespace GameSystems.CoreSystem
 
                 if (charA.Gender == GenderType.Male && charB.Gender == GenderType.Male)
                 {
-                    successProbability += 0.15f;
+                    tempSuccessProbability += 0.15f;
                     lootMultiplier = 1.50f;
                 }
                 else if ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Female) ||
                          (charA.Gender == GenderType.Female && charB.Gender == GenderType.Male))
                 {
-                    successProbability += 0.40f;
+                    tempSuccessProbability += 0.40f;
                 }
                 else if ((!aIsMonster && bIsMonster) || (aIsMonster && !bIsMonster))
                 {
@@ -248,21 +289,23 @@ namespace GameSystems.CoreSystem
                     {
                         if (charA.Attributes.ContainsKey(attr))
                         {
-                            originalStatsA[attr] = charA.Attributes[attr];
+                            if (!originalStatsA.ContainsKey(attr)) originalStatsA[attr] = charA.Attributes[attr];
                             charA.Attributes[attr] *= 2;
                         }
                         if (charB.Attributes.ContainsKey(attr))
                         {
-                            originalStatsB[attr] = charB.Attributes[attr];
+                            if (!originalStatsB.ContainsKey(attr)) originalStatsB[attr] = charB.Attributes[attr];
                             charB.Attributes[attr] *= 2;
                         }
                     }
                 }
             }
 
-                        float finalSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charA, policy.TargetQuest));
-            float finalSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.EconomyPolicy(charB, policy.TargetQuest));
-            successProbability = Math.Clamp((finalSuccessA + finalSuccessB) / 2f + (bondLevel >= 5 ? 0.10f : 0f) + (bondLevel == 10 && ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Male) || (charA.Gender == GenderType.Male && charB.Gender == GenderType.Female) || (charA.Gender == GenderType.Female && charB.Gender == GenderType.Male)) ? ((charA.Gender == GenderType.Male && charB.Gender == GenderType.Male) ? 0.15f : 0.40f) : 0f), 0f, 1f);
+            float finalSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest));
+            float finalSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest));
+            float tempBuffsOnly = tempSuccessProbability - ((CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest)) + CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest))) / 2f);
+            float calculatedFinalSuccess = (finalSuccessA + finalSuccessB) / 2f + tempBuffsOnly;
+            successProbability = Math.Clamp(calculatedFinalSuccess, 0f, 1f);
             isSuccess = _rng.NextDouble() <= successProbability;
 
             if (!isSuccess)
