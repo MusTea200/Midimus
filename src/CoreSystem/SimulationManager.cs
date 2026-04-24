@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using GameSystems.QuestSystem;
 using GameSystems.CharacterSystem;
-using GameSystems.StorySystem;
 
 namespace GameSystems.CoreSystem
 {
@@ -19,7 +18,7 @@ namespace GameSystems.CoreSystem
             _rng = new Random();
         }
 
-        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null)
+        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies)
         {
             List<ExpeditionResult> dailyResults = new List<ExpeditionResult>();
 
@@ -34,7 +33,6 @@ namespace GameSystems.CoreSystem
 
             // Günün tamamı bittiğinde bilanço için tetikle
             OnDailySimulationCompleted?.Invoke(dailyResults);
-            if (state != null && ledger != null && mainCharacter != null) ProcessDailyGoblinInvestment(state, ledger, mainCharacter);
 
             return dailyResults;
         }
@@ -302,28 +300,6 @@ namespace GameSystems.CoreSystem
                 }
             }
             return new ExpeditionResult(policy, isSuccess, animType, lootedMaterials);
-        }
-
-
-
-        public void ProcessDailyGoblinInvestment(GlobalStoryState state, DailyLedger ledger, Character mainCharacter)
-        {
-            if (state.HasFlag("Active_Goblin_Investment"))
-            {
-                double roll = _rng.NextDouble();
-                if (roll <= 0.70)
-                {
-                    ledger.AddBalance(50);
-                    Console.WriteLine("Gölge Komisyoncu Yatırımı: Günlük temettü (+50 Altın) kasaya eklendi.");
-                }
-                else
-                {
-                    Console.WriteLine("GÖLGE KOMİSYONCU KAÇTI! 'Goblin Kaçtı' eventi tetiklendi.");
-                    state.RemoveFlag("Active_Goblin_Investment");
-                    mainCharacter.Stress += 20;
-                    Console.WriteLine($"Yatırım battı. {mainCharacter.Name} dolandırıldığını anladı ve stresi arttı (+20).");
-                }
-            }
         }
     }
 }
