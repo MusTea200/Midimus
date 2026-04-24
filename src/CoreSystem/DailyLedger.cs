@@ -20,11 +20,13 @@ namespace GameSystems.CoreSystem
 
         public void DeductBalance(int amount)
         {
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Tutar negatif olamaz.");
             MainBalance -= amount;
         }
 
         public void AddBalance(int amount)
         {
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Tutar negatif olamaz.");
             MainBalance += amount;
         }
 
