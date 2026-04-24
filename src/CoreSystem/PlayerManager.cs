@@ -49,6 +49,7 @@ namespace GameSystems.CoreSystem
 
         public bool ConsumeMaterial(CraftingMaterial material, int amount)
         {
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount), "Tutar negatif olamaz.");
             if (HasMaterial(material, amount))
             {
                 MaterialInventory[material] -= amount;
