@@ -124,6 +124,120 @@ namespace GameSystems.CitySystem
             }
         }
 
+
+        // --- SİBER ENTEGRASYONLAR ---
+        public void InstallBrainChip(Character character)
+        {
+            TalkToRichardGobrigez();
+            if (character.HasBrainChip)
+            {
+                Console.WriteLine("Richard: 'Bu deneğin zaten bir çipi var.'");
+                return;
+            }
+
+            character.IsCyborg = true;
+            character.HasBrainChip = true;
+
+            if (character.Attributes.ContainsKey(AttributeType.Charisma)) character.Attributes[AttributeType.Charisma] = 0;
+            else character.Attributes.Add(AttributeType.Charisma, 0);
+
+            if (character.Attributes.ContainsKey(AttributeType.Willpower)) character.Attributes[AttributeType.Willpower] = 0;
+            else character.Attributes.Add(AttributeType.Willpower, 0);
+
+            character.Stress = 0;
+            Console.WriteLine($"{character.Name}'ye Beyin Çipi takıldı! Maksimum Stres etkisiz hale geldi. Ancak Charisma ve Willpower 0'landı.");
+        }
+
+        // --- BİYOLOJİK MUTASYONLAR ---
+        public void ApplyChemicalBath(Character character)
+        {
+            TalkToRichardGobrigez();
+            Console.WriteLine("Karakter kimyasal havuzuna atıldı...");
+
+            Random rng = new Random();
+            Array mutations = Enum.GetValues(typeof(MutationType));
+            MutationType randomMutation = (MutationType)mutations.GetValue(rng.Next(mutations.Length));
+
+            character.Mutations.Add(randomMutation);
+
+            if (randomMutation == MutationType.SlimeArm)
+            {
+                if (character.Attributes.ContainsKey(AttributeType.Strength)) character.Attributes[AttributeType.Strength] += 30;
+                else character.Attributes.Add(AttributeType.Strength, 30);
+                if (character.Attributes.ContainsKey(AttributeType.Agility)) character.Attributes[AttributeType.Agility] -= 15;
+                else character.Attributes.Add(AttributeType.Agility, -15);
+                Console.WriteLine("MUTASYON: Slime Kolu! (+30 Strength, -15 Agility)");
+            }
+            else if (randomMutation == MutationType.BeastLegs)
+            {
+                if (character.Attributes.ContainsKey(AttributeType.Agility)) character.Attributes[AttributeType.Agility] += 30;
+                else character.Attributes.Add(AttributeType.Agility, 30);
+                if (character.Attributes.ContainsKey(AttributeType.Intelligence)) character.Attributes[AttributeType.Intelligence] -= 15;
+                else character.Attributes.Add(AttributeType.Intelligence, -15);
+                Console.WriteLine("MUTASYON: Canavar Bacakları! (+30 Agility, -15 Intelligence)");
+            }
+            else
+            {
+                if (character.Attributes.ContainsKey(AttributeType.Endurance)) character.Attributes[AttributeType.Endurance] += 30;
+                else character.Attributes.Add(AttributeType.Endurance, 30);
+                if (character.Attributes.ContainsKey(AttributeType.Charisma)) character.Attributes[AttributeType.Charisma] -= 20;
+                else character.Attributes.Add(AttributeType.Charisma, -20);
+                Console.WriteLine("MUTASYON: Asit Kan! (+30 Endurance, -20 Charisma)");
+            }
+        }
+
+        public void StartCocoonPhase(Character character, int currentDay)
+        {
+            TalkToRichardGobrigez();
+            if (character.IsLockedInCocoon)
+            {
+                Console.WriteLine("Richard: 'Denek zaten kozada.'");
+                return;
+            }
+
+            character.IsLockedInCocoon = true;
+            character.CocoonEntryDay = currentDay;
+
+            Console.WriteLine($"{character.Name} biyolojik bir kozaya hapsedildi. 7 gün boyunca kullanılamaz.");
+        }
+
+        // --- KİMLİK VE RUH MANİPÜLASYONU ---
+        public void PerformSpeciesTransition(Character character)
+        {
+            TalkToRichardGobrigez();
+            if (character.Gender == GenderType.Male) character.Gender = GenderType.MaleMonster;
+            else if (character.Gender == GenderType.Female) character.Gender = GenderType.FemaleMonster;
+            else if (character.Gender == GenderType.MaleMonster) character.Gender = GenderType.Male;
+            else if (character.Gender == GenderType.FemaleMonster) character.Gender = GenderType.Female;
+
+            Console.WriteLine($"{character.Name} tür değişimi geçirdi! Yeni türü: {character.Gender}");
+        }
+
+        public MindDrive ExtractConsciousness(Character source)
+        {
+            TalkToRichardGobrigez();
+            Console.WriteLine($"{source.Name}'nin zihni dijital bir çipe aktarılıyor...");
+            MindDrive drive = new MindDrive(source.Name, source.Traits, source.AdvancedTraits);
+            Console.WriteLine("Zihin aktarımı tamamlandı. Beden artık boş bir kabuk.");
+            source.Traits.Clear();
+            source.AdvancedTraits.Clear();
+            return drive;
+        }
+
+        public void ImplantConsciousness(MindDrive drive, Character targetBody)
+        {
+            TalkToRichardGobrigez();
+            Console.WriteLine($"'{drive.OriginalName}' zihni {targetBody.Name} bedenine enjekte ediliyor...");
+
+            targetBody.Traits.Clear();
+            targetBody.AdvancedTraits.Clear();
+
+            targetBody.Traits.AddRange(drive.Traits);
+            targetBody.AdvancedTraits.AddRange(drive.AdvancedTraits);
+
+            Console.WriteLine($"Zihin başarıyla yerleştirildi. Bu beden artık '{drive.OriginalName}' tecrübelerine sahip.");
+        }
+
         // 3. Şamanın Kulübesi (Canavar Şifası ve Büyü)
         public void TalkToShaman()
         {
