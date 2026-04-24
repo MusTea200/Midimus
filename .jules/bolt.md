@@ -1,0 +1,3 @@
+## 2026-04-24 - C# Dictionary Lookup and Enum Reflection Performance in Hot Paths
+**Learning:** Using `Enum.GetValues()` inside frequently called methods (like radar calculations in minigames) introduces significant overhead due to reflection and array allocations on the heap. Additionally, using `ContainsKey` followed by an indexer access (`attributes[attr]`) results in two hash lookups.
+**Action:** Cache enum values in a `private static readonly` array to avoid reflection and allocation. Use `TryGetValue` instead of `ContainsKey` + indexer to halve the cost of dictionary lookups. Iterate over the cached array using a `for` loop to avoid enumerator allocations.
