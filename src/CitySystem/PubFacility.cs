@@ -16,6 +16,11 @@ namespace GameSystems.CitySystem
 
         public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager)
         {
+            if (charA.HasBrainChip || charB.HasBrainChip)
+            {
+                Console.WriteLine("Beyin çipi olan bir karakterin sosyalleşme yetisi yoktur.");
+                return;
+            }
             if (charA.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü") || charB.EquippedItems.Any(i => i.ItemName == "Kör Öfke Yüzüğü"))
             {
                 Console.WriteLine("Bu karakter kimseyle bağ kuramayacak kadar öfkeli!");

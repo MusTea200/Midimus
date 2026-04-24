@@ -42,7 +42,7 @@ namespace GameSystems.CharacterSystem
     {
         public string Id { get; private set; }
         public string Name { get; private set; }
-        public GenderType Gender { get; private set; }
+        public GenderType Gender { get; set; }
         public Dictionary<AttributeType, int> Attributes { get; private set; } // 1-100 arası
         public List<TraitType> Traits { get; private set; }
         public List<UpgradeableTrait> AdvancedTraits { get; private set; }
@@ -51,6 +51,11 @@ namespace GameSystems.CharacterSystem
         public Dictionary<InteractionType, bool> RedLines { get; private set; } // True: Kırmızı çizgi, False: Sevdiği eylem
 
         public bool MiracleReady { get; set; }
+        public bool IsCyborg { get; set; }
+        public bool HasBrainChip { get; set; }
+        public bool IsLockedInCocoon { get; set; }
+        public int CocoonEntryDay { get; set; }
+        public List<MutationType> Mutations { get; private set; }
         public int Exp { get; set; }
 
         public Mount? ActiveMount { get; set; }
@@ -61,7 +66,8 @@ namespace GameSystems.CharacterSystem
             get => _stress;
             set
             {
-                _stress = Math.Clamp(value, -100, 100);
+                if (HasBrainChip) _stress = 0;
+                else _stress = Math.Clamp(value, -100, 100);
                 CheckPsychologicalThresholds();
             }
         }
@@ -119,6 +125,7 @@ namespace GameSystems.CharacterSystem
             AdvancedTraits = new List<UpgradeableTrait>();
             Phobias = new List<PhobiaType>();
             EquippedItems = new List<Item>();
+            Mutations = new List<MutationType>();
             RedLines = new Dictionary<InteractionType, bool>();
             Stress = 0;
             Exp = 0;
