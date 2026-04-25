@@ -9,6 +9,8 @@ namespace GameSystems.CoreSystem
 {
     public class SimulationManager
     {
+        public int CurrentDay { get; private set; }
+        public System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape> VaultVHSTapes { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape>();
         private Random _rng;
 
         // UI için eventler (Sekizgen animasyon sistemine haber vermek için)
@@ -20,7 +22,7 @@ namespace GameSystems.CoreSystem
             _rng = new Random();
         }
 
-        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null)
+        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, List<Character>? allCharacters = null, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null)
         {
             List<ExpeditionResult> dailyResults = new List<ExpeditionResult>();
 
@@ -35,6 +37,31 @@ namespace GameSystems.CoreSystem
 
             // Günün tamamı bittiğinde bilanço için tetikle
             OnDailySimulationCompleted?.Invoke(dailyResults);
+
+            CurrentDay++;
+            if (VaultVHSTapes.Count > 0 && ledger != null)
+            {
+                int storageCost = VaultVHSTapes.Count * 50;
+                ledger.DeductBalance(storageCost);
+                System.Console.WriteLine($"VHS Soğutma/Saklama Masrafı: {storageCost} Altın kesildi.");
+            }
+            if (allCharacters != null)
+            {
+                foreach (var c in allCharacters)
+                {
+                    var trait = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(c.AdvancedTraits));
+                    if (trait != null)
+                    {
+                        trait.DecrementDay();
+                        if (trait.RemainingDays <= 0)
+                        {
+                            c.AdvancedTraits.Remove(trait);
+                            System.Console.WriteLine($"{c.Name} yeni bedenine tamamen uyum sağladı! Beden disforisi bitti.");
+                        }
+                    }
+                }
+            }
+
             if (state != null && ledger != null && mainCharacter != null) ProcessDailyGoblinInvestment(state, ledger, mainCharacter);
 
             return dailyResults;
@@ -205,6 +232,8 @@ namespace GameSystems.CoreSystem
 
             // Başarı şansı = (1 - Tehlike - Stat Eksikliği) * Karakterin Uyumu
             float chance = (1f - baseDanger - statPenalty) * complianceFactor;
+            var accTrait = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(policy.InsuredCharacter.AdvancedTraits));
+            if (accTrait != null) chance *= accTrait.GetEfficiencyMultiplier();
             if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen")) chance = 0.90f;
 
             return Math.Clamp(chance, 0f, 1f);

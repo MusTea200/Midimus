@@ -213,29 +213,54 @@ namespace GameSystems.CitySystem
             Console.WriteLine($"{character.Name} tür değişimi geçirdi! Yeni türü: {character.Gender}");
         }
 
-        public MindDrive ExtractConsciousness(Character source)
+        public GameSystems.CharacterSystem.MindVHSTape ExtractConsciousnessToVHS(GameSystems.CharacterSystem.Character source)
         {
             TalkToRichardGobrigez();
-            Console.WriteLine($"{source.Name}'nin zihni dijital bir çipe aktarılıyor...");
-            MindDrive drive = new MindDrive(source.Name, source.Traits, source.AdvancedTraits);
-            Console.WriteLine("Zihin aktarımı tamamlandı. Beden artık boş bir kabuk.");
+            int goldCost = 5000;
+            if (_ledger.MainBalance < goldCost)
+            {
+                System.Console.WriteLine($"Yetersiz altın. VHS aktarımı için {goldCost} altın gerekiyor.");
+                return null;
+            }
+            _ledger.DeductBalance(goldCost);
+
+            System.Console.WriteLine($"{source.Name}'nin zihni yasadışı bir VHS kasete aktarılıyor...");
+            GameSystems.CharacterSystem.MindVHSTape tape = new GameSystems.CharacterSystem.MindVHSTape(source.Name, source.Traits, source.AdvancedTraits, source.Attributes);
+
+            System.Console.WriteLine("Zihin kopyalandı. Kaynak beden klinik olarak ölü duruma getirildi (Kalıcı Ölüm).");
+            source.Stress = 100;
             source.Traits.Clear();
-            source.AdvancedTraits.Clear();
-            return drive;
+            return tape;
         }
 
-        public void ImplantConsciousness(MindDrive drive, Character targetBody)
+        public void ImplantVHSIntoBody(GameSystems.CharacterSystem.MindVHSTape tape, GameSystems.CharacterSystem.Character targetBody)
         {
             TalkToRichardGobrigez();
-            Console.WriteLine($"'{drive.OriginalName}' zihni {targetBody.Name} bedenine enjekte ediliyor...");
+            int goldCost = 10000;
+            if (_ledger.MainBalance < goldCost)
+            {
+                System.Console.WriteLine($"Yasadışı beden temini ve enjeksiyon için {goldCost} altın gerekiyor.");
+                return;
+            }
+            _ledger.DeductBalance(goldCost);
+
+            System.Console.WriteLine($"'{tape.OriginalName}' VHS kaseti yeni bedenine ({targetBody.Name}) entegre ediliyor...");
 
             targetBody.Traits.Clear();
             targetBody.AdvancedTraits.Clear();
 
-            targetBody.Traits.AddRange(drive.Traits);
-            targetBody.AdvancedTraits.AddRange(drive.AdvancedTraits);
+            targetBody.Traits.AddRange(tape.Traits);
+            targetBody.AdvancedTraits.AddRange(tape.AdvancedTraits);
 
-            Console.WriteLine($"Zihin başarıyla yerleştirildi. Bu beden artık '{drive.OriginalName}' tecrübelerine sahip.");
+            foreach (var kvp in tape.Attributes)
+            {
+                if (targetBody.Attributes.ContainsKey(kvp.Key)) targetBody.Attributes[kvp.Key] = kvp.Value;
+                else targetBody.Attributes.Add(kvp.Key, kvp.Value);
+            }
+
+            targetBody.AdvancedTraits.Add(new GameSystems.CharacterSystem.BodyAcclimatizationTrait(20));
+
+            System.Console.WriteLine($"İşlem başarılı! Beden disforisi (Acclimatization) başladı. Beden 20 gün boyunca kısıtlı verimle çalışacak ve polis riski taşıyacak.");
         }
 
         // 3. Şamanın Kulübesi (Canavar Şifası ve Büyü)

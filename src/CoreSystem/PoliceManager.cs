@@ -80,5 +80,43 @@ namespace GameSystems.CoreSystem
             // Baskın sonrası aranma seviyesi sıfırlanabilir veya oyun bitebilir.
             WantedStars = 0;
         }
-    }
+
+        public void TriggerPoliceInterrogation(GameSystems.CharacterSystem.Character character, DailyLedger ledger)
+        {
+            System.Console.WriteLine($"DÜDÜK SESİ! Polis {character.Name}'nin yasa dışı yeni bir bedende dolaştığından şüphelendi ve sorguya çekti.");
+
+            System.Random rng = new System.Random();
+            int charisma = character.Attributes.ContainsKey(GameSystems.CharacterSystem.AttributeType.Charisma) ? character.Attributes[GameSystems.CharacterSystem.AttributeType.Charisma] : 10;
+
+            // Rüşvetçi vs pasifler varsa eklenebilir, şimdilik direkt Charisma zar atalım
+            if (rng.Next(1, 101) <= charisma)
+            {
+                int bribeCost = 100;
+                if (ledger.MainBalance >= bribeCost)
+                {
+                    ledger.DeductBalance(bribeCost);
+                    System.Console.WriteLine($"BAŞARILI! {character.Name} polislere rüşvet verdi ve tatlı diliyle ikna etti. (-100 Altın)");
+                }
+                else
+                {
+                    ledger.DeductBalance(ledger.MainBalance);
+                    System.Console.WriteLine($"BAŞARILI sayılır. {character.Name} polisleri ikna etti ama cebindeki tüm altını verdiler.");
+                }
+            }
+            else
+            {
+                int penalty = 5000;
+                if (ledger.MainBalance >= penalty) ledger.DeductBalance(penalty);
+                else ledger.DeductBalance(ledger.MainBalance);
+
+                System.Console.WriteLine($"BAŞARISIZ! Yasadışı zihin aktarımı suçu tespit edildi.");
+                System.Console.WriteLine($"{character.Name} tutuklandı ve sistemden silindi! Şirkete büyük bir ceza (-5000 Altın) kesildi.");
+
+                character.Traits.Clear();
+                character.AdvancedTraits.Clear();
+                character.Stress = 100;
+                // Oyun motoru bu karakteri ölü/tutuklu olarak algılayıp listeden çıkartmalı.
+            }
+        }
+}
 }
