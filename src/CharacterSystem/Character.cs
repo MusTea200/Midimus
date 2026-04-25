@@ -18,7 +18,7 @@ namespace GameSystems.CharacterSystem
 
     public enum TraitType
     {
-        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish, Deja_Vu, Trust_Issues, Santas_Blessing, Broken_Heart, Iron_Liver, Hangover, Brawler, Bruised, Cowardly_Fast
+        Brave, Cowardly, Greedy, Generous, Gluttonous, Irritable, Thrifty, HasPet, Cautious, Childish, Deja_Vu, Trust_Issues, Santas_Blessing, Broken_Heart, Iron_Liver, Hangover, Brawler, Bruised, Cowardly_Fast, Gladiator
     }
 
 

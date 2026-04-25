@@ -1,6 +1,7 @@
 using System;
 using GameSystems.CharacterSystem;
 using GameSystems.CoreSystem;
+using GameSystems.StorySystem;
 
 namespace GameSystems.CitySystem
 {
@@ -8,12 +9,14 @@ namespace GameSystems.CitySystem
     {
         private DailyLedger _ledger;
         private Random _rng;
+        private GlobalStoryState _storyState;
 
-        public BlackMarketFacility(DailyLedger ledger)
+        public BlackMarketFacility(DailyLedger ledger, GlobalStoryState storyState)
             : base("Karaborsa", 1500)
         {
             _ledger = ledger;
             _rng = new Random();
+            _storyState = storyState;
         }
 
         public override void EnterFacility(Character character)
@@ -36,6 +39,12 @@ namespace GameSystems.CitySystem
                     else if (curseType == 1) mysteryItem = new Item("Kör Öfke Yüzüğü", randomBaseStat);
                     else mysteryItem = new Item("Midas'ın Gözyaşı", randomBaseStat);
                     mysteryItem.IsCursed = true;
+                }
+                else if (_storyState != null && _storyState.DiscoveredOtherUniverses && _rng.NextDouble() <= 0.40)
+                {
+                    randomBaseStat += 20;
+                    mysteryItem = new Item($"Uzaylı/Boyutsal Eşya #{_rng.Next(100, 999)}", randomBaseStat);
+                    Console.WriteLine("Boyutlararası radyasyon yayan bir eşya...");
                 }
                 else
                 {
