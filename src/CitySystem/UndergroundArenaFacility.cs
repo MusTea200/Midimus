@@ -10,6 +10,8 @@ namespace GameSystems.CitySystem
         private PoliceManager _police;
         private Random _rng;
 
+        public event Action? OnPoliceRaid;
+
         public UndergroundArenaFacility(DailyLedger ledger, PoliceManager police)
             : base("Yeraltı Kolezyumu", 5000)
         {
@@ -64,6 +66,7 @@ namespace GameSystems.CitySystem
 
                 _police.CommitIllegalAction(2); // Aranma seviyesi artar
                 Console.WriteLine($"Polis cezası kesildi: -{fine} Altın.");
+                OnPoliceRaid?.Invoke();
                 return;
             }
 
