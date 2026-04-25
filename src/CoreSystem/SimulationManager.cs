@@ -10,6 +10,7 @@ namespace GameSystems.CoreSystem
     public class SimulationManager
     {
         public int CurrentDay { get; private set; }
+        public int HiddenKarmaScore { get; private set; }
         public System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape> VaultVHSTapes { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape>();
         private Random _rng;
 
@@ -20,6 +21,13 @@ namespace GameSystems.CoreSystem
         public SimulationManager()
         {
             _rng = new Random();
+            HiddenKarmaScore = 0;
+        }
+
+        public void AddKarma(int amount)
+        {
+            HiddenKarmaScore += amount;
+            string prefix = amount > 0 ? "+" : ""; System.Console.WriteLine($"[KARMA GÜNCELLENDİ] (Gizli Değer: {prefix}{amount})");
         }
 
         public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, List<Character>? allCharacters = null, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null, GameSystems.CitySystem.TempleFacility? templeFacility = null)
