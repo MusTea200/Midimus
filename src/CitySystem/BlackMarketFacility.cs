@@ -10,6 +10,7 @@ namespace GameSystems.CitySystem
         private DailyLedger _ledger;
         private Random _rng;
         private GlobalStoryState _storyState;
+        public bool ShowAlienItems { get; private set; }
 
         public BlackMarketFacility(DailyLedger ledger, GlobalStoryState storyState)
             : base("Karaborsa", 1500)
@@ -40,7 +41,7 @@ namespace GameSystems.CitySystem
                     else mysteryItem = new Item("Midas'ın Gözyaşı", randomBaseStat);
                     mysteryItem.IsCursed = true;
                 }
-                else if (_storyState != null && _storyState.DiscoveredOtherUniverses && _rng.NextDouble() <= 0.40)
+                else if (ShowAlienItems && _rng.NextDouble() <= 0.40)
                 {
                     randomBaseStat += 20;
                     mysteryItem = new Item($"Uzaylı/Boyutsal Eşya #{_rng.Next(100, 999)}", randomBaseStat);
@@ -63,6 +64,12 @@ namespace GameSystems.CitySystem
                 Console.WriteLine("Karaborsada veresiye geçmez. Yeterli altınınız yok.");
                 return null;
             }
+        }
+
+        public void EnableAlienItems()
+        {
+            ShowAlienItems = true;
+            Console.WriteLine("Karaborsa'ya uzaylı/boyutsal teknolojiler (Alien Tech) eklendi.");
         }
     }
 }

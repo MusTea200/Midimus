@@ -9,15 +9,21 @@ namespace GameSystems.RealEstateSystem
 {
     public class DungeonSiegeManager
     {
-        public event Action? OnLoreDiscovered;
+        public event Action<string>? OnLoreDiscovered;
 
-        public void InitiateHostileTakeover(DungeonProperty targetDungeon, List<VatGrownBody> cloneArmy, PoliceManager police, GlobalStoryState state)
+        public void InitiateHostileTakeover(DungeonProperty targetDungeon, List<Character> cloneArmy, PoliceManager police, GlobalStoryState state)
         {
             Console.WriteLine($"[SİSTEM] {targetDungeon.Name} zindanına {cloneArmy.Count} klonluk bir orduyla işgal başlatıldı!");
 
             if (cloneArmy == null || cloneArmy.Count == 0)
             {
                 Console.WriteLine("İşgal başarısız: Gönderilecek klon ordusu yok!");
+                return;
+            }
+
+            if (cloneArmy.Any(c => !c.IsVatGrown))
+            {
+                Console.WriteLine("İşgal başarısız: Orduya sadece klonlar (IsVatGrown=true) katılabilir!");
                 return;
             }
 
@@ -28,8 +34,8 @@ namespace GameSystems.RealEstateSystem
             int cloneAttackPower = 0;
             foreach (var clone in cloneArmy)
             {
-                int str = clone.BaseAttributes.ContainsKey(AttributeType.Strength) ? clone.BaseAttributes[AttributeType.Strength] : 10;
-                int agi = clone.BaseAttributes.ContainsKey(AttributeType.Agility) ? clone.BaseAttributes[AttributeType.Agility] : 10;
+                int str = clone.Attributes.ContainsKey(AttributeType.Strength) ? clone.Attributes[AttributeType.Strength] : 10;
+                int agi = clone.Attributes.ContainsKey(AttributeType.Agility) ? clone.Attributes[AttributeType.Agility] : 10;
                 cloneAttackPower += str + agi;
             }
 
@@ -40,7 +46,10 @@ namespace GameSystems.RealEstateSystem
             var casualties = cloneArmy.Take(casualtyCount).ToList();
             foreach (var clone in casualties)
             {
-                clone.DestroyBody();
+                clone.Traits.Clear();
+                clone.AdvancedTraits.Clear();
+                clone.Stress = 100;
+                // Logically dead/destroyed for Character.cs
             }
 
             Console.WriteLine($"{casualtyCount} klon çatışmada can verdi...");
@@ -59,7 +68,7 @@ namespace GameSystems.RealEstateSystem
                     state.DiscoveredOtherUniverses = true;
                     string loreMessage = "Zindanın kalbine indiğinde buranın bir yeraltı mağarası değil, kızıl gökyüzü olan başka bir gezegen olduğunu fark ettin. Biz sigortacı değiliz... Biz istilacıyız!";
                     Console.WriteLine($"[LORE UNLOCKED] {loreMessage}");
-                    OnLoreDiscovered?.Invoke();
+                    OnLoreDiscovered?.Invoke(loreMessage);
                 }
             }
             else

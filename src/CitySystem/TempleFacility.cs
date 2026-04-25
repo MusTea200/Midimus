@@ -309,6 +309,7 @@ namespace GameSystems.CitySystem
 
             newCharacterInstance.Traits.Clear();
             newCharacterInstance.AdvancedTraits.Clear();
+            newCharacterInstance.IsVatGrown = true;
 
             newCharacterInstance.Traits.AddRange(tape.Traits);
             newCharacterInstance.AdvancedTraits.AddRange(tape.AdvancedTraits);

@@ -52,6 +52,7 @@ namespace GameSystems.CharacterSystem
 
         public bool MiracleReady { get; set; }
         public bool IsCyborg { get; set; }
+        public bool IsVatGrown { get; set; }
         public bool HasBrainChip { get; set; }
         public bool IsLockedInCocoon { get; set; }
         public int CocoonEntryDay { get; set; }
