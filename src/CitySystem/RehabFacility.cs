@@ -22,7 +22,7 @@ namespace GameSystems.CitySystem
             Console.WriteLine($"{character.Name}, {FacilityName} tesisine giriş yaptı.");
         }
 
-        public virtual bool RelaxCharacter(Character character, GameSystems.CoreSystem.PoliceManager policeManager = null)
+        public virtual bool RelaxCharacter(Character character, GameSystems.CoreSystem.PoliceManager? policeManager = null)
         {
             if (character.EquippedItems.Any(i => i.ItemName == "Midas'ın Gözyaşı"))
             {

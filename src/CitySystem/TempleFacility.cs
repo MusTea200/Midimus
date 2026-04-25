@@ -211,7 +211,7 @@ namespace GameSystems.CitySystem
 
             Random rng = new Random();
             Array mutations = Enum.GetValues(typeof(MutationType));
-            MutationType randomMutation = (MutationType)mutations.GetValue(rng.Next(mutations.Length));
+            MutationType randomMutation = (MutationType)(mutations.GetValue(rng.Next(mutations.Length)) ?? MutationType.SlimeArm);
 
             character.Mutations.Add(randomMutation);
 
@@ -268,7 +268,7 @@ namespace GameSystems.CitySystem
             Console.WriteLine($"{character.Name} tür değişimi geçirdi! Yeni türü: {character.Gender}");
         }
 
-        public GameSystems.CharacterSystem.MindVHSTape ExtractConsciousnessToVHS(GameSystems.CharacterSystem.Character source)
+        public GameSystems.CharacterSystem.MindVHSTape? ExtractConsciousnessToVHS(GameSystems.CharacterSystem.Character source)
         {
             TalkToRichardGobrigez();
             int goldCost = 5000;

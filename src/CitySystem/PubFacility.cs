@@ -14,7 +14,7 @@ namespace GameSystems.CitySystem
             _rng = new Random();
         }
 
-        public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager, GameSystems.CoreSystem.PoliceManager policeManager = null)
+        public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager, GameSystems.CoreSystem.PoliceManager? policeManager = null)
         {
             if (policeManager != null)
             {

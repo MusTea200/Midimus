@@ -44,6 +44,18 @@ namespace GameSystems.CoreSystem
             {
                 foreach (var c in allCharacters)
                 {
+                    if (c.IsLockedInCocoon)
+                    {
+                        if (CurrentDay - c.CocoonEntryDay >= 7)
+                        {
+                            c.IsLockedInCocoon = false;
+                            Console.WriteLine($"{c.Name} kozadan çıktı! İnanılmaz bir mutasyon geçirdi.");
+                            // Add super trait or massive stats here
+                            if (c.Attributes.ContainsKey(GameSystems.CharacterSystem.AttributeType.Strength)) c.Attributes[GameSystems.CharacterSystem.AttributeType.Strength] += 50;
+                            else c.Attributes.Add(GameSystems.CharacterSystem.AttributeType.Strength, 50);
+                        }
+                    }
+
                     var trait = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(c.AdvancedTraits));
                     if (trait != null)
                     {
