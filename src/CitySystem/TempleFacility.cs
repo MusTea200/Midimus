@@ -125,6 +125,61 @@ namespace GameSystems.CitySystem
         }
 
 
+
+        // --- LABORATUVAR AR-GE VE ALTYAPI SİSTEMİ ---
+        public int LabLevel { get; private set; } = 1;
+        public System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody> ActiveVats { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody>();
+        public System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody> ReadyBodies { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody>();
+
+        public void UpgradeLab()
+        {
+            TalkToRichardGobrigez();
+            int upgradeCost = LabLevel == 1 ? 5000 : 15000;
+
+            if (_ledger.MainBalance >= upgradeCost)
+            {
+                if (LabLevel >= 3)
+                {
+                    System.Console.WriteLine("Richard: 'Laboratuvarımız zaten en üst seviyede.'");
+                    return;
+                }
+
+                _ledger.DeductBalance(upgradeCost);
+                LabLevel++;
+
+                System.Console.WriteLine($"AR-GE BAŞARILI! Laboratuvar Seviye {LabLevel} oldu.");
+                if (LabLevel == 2) System.Console.WriteLine("Yüksek Riskli klon üretimi (High Risk Vats) kilidi açıldı!");
+                if (LabLevel == 3) System.Console.WriteLine("Gelişmiş Soğutma Deposu inşa edildi. Kaset saklama maliyeti düştü.");
+            }
+            else
+            {
+                System.Console.WriteLine($"Richard: 'Sermaye eksik evlat. Yükseltme için {upgradeCost} altın gerek.'");
+            }
+        }
+
+        public void StartGrowingBody(bool isHighRisk)
+        {
+            TalkToRichardGobrigez();
+            if (isHighRisk && LabLevel < 2)
+            {
+                System.Console.WriteLine("Richard: 'Bu teknoloji için Seviye 2 Laboratuvar şart. Önce yatırım yap.'");
+                return;
+            }
+
+            int cost = isHighRisk ? 3000 : 1000;
+            if (_ledger.MainBalance >= cost)
+            {
+                _ledger.DeductBalance(cost);
+                var newVat = new GameSystems.CharacterSystem.VatGrownBody(isHighRisk);
+                ActiveVats.Add(newVat);
+                System.Console.WriteLine($"{newVat.VatId} üretim bandına alındı. Büyüme süreci başladı.");
+            }
+            else
+            {
+                System.Console.WriteLine($"Richard: 'Üretim maliyeti ({cost} altın) için yeterli bütçemiz yok.'");
+            }
+        }
+
         // --- SİBER ENTEGRASYONLAR ---
         public void InstallBrainChip(Character character)
         {
@@ -233,34 +288,50 @@ namespace GameSystems.CitySystem
             return tape;
         }
 
-        public void ImplantVHSIntoBody(GameSystems.CharacterSystem.MindVHSTape tape, GameSystems.CharacterSystem.Character targetBody)
+        public void ImplantVHSIntoBody(GameSystems.CharacterSystem.MindVHSTape tape, GameSystems.CharacterSystem.VatGrownBody targetBody, GameSystems.CharacterSystem.Character newCharacterInstance)
         {
             TalkToRichardGobrigez();
+            if (!targetBody.IsReady || targetBody.IsDestroyed)
+            {
+                System.Console.WriteLine("Richard: 'Bu beden henüz hazır değil veya çürümüş.'");
+                return;
+            }
+
             int goldCost = 10000;
             if (_ledger.MainBalance < goldCost)
             {
-                System.Console.WriteLine($"Yasadışı beden temini ve enjeksiyon için {goldCost} altın gerekiyor.");
+                System.Console.WriteLine($"Yasadışı zihin enjeksiyonu operasyonu için {goldCost} altın gerekiyor.");
                 return;
             }
             _ledger.DeductBalance(goldCost);
 
-            System.Console.WriteLine($"'{tape.OriginalName}' VHS kaseti yeni bedenine ({targetBody.Name}) entegre ediliyor...");
+            System.Console.WriteLine($"'{tape.OriginalName}' VHS kaseti yeni klon bedenine ({targetBody.VatId}) entegre ediliyor...");
 
-            targetBody.Traits.Clear();
-            targetBody.AdvancedTraits.Clear();
+            newCharacterInstance.Traits.Clear();
+            newCharacterInstance.AdvancedTraits.Clear();
 
-            targetBody.Traits.AddRange(tape.Traits);
-            targetBody.AdvancedTraits.AddRange(tape.AdvancedTraits);
+            newCharacterInstance.Traits.AddRange(tape.Traits);
+            newCharacterInstance.AdvancedTraits.AddRange(tape.AdvancedTraits);
+            newCharacterInstance.Traits.AddRange(targetBody.BaseTraits);
+
+            // Bedenin genetik mutasyon statları ile kasetin tecrübe statlarını harmanla
+            foreach (var kvp in targetBody.BaseAttributes)
+            {
+                if (newCharacterInstance.Attributes.ContainsKey(kvp.Key)) newCharacterInstance.Attributes[kvp.Key] = kvp.Value;
+                else newCharacterInstance.Attributes.Add(kvp.Key, kvp.Value);
+            }
 
             foreach (var kvp in tape.Attributes)
             {
-                if (targetBody.Attributes.ContainsKey(kvp.Key)) targetBody.Attributes[kvp.Key] = kvp.Value;
-                else targetBody.Attributes.Add(kvp.Key, kvp.Value);
+                // Tecrübeler fiziksel sınırlarla birleşiyor (Basit toplama)
+                if (newCharacterInstance.Attributes.ContainsKey(kvp.Key)) newCharacterInstance.Attributes[kvp.Key] += (kvp.Value / 2); // Kasetten gelen statların yarısı
+                else newCharacterInstance.Attributes.Add(kvp.Key, kvp.Value / 2);
             }
 
-            targetBody.AdvancedTraits.Add(new GameSystems.CharacterSystem.BodyAcclimatizationTrait(20));
+            newCharacterInstance.AdvancedTraits.Add(new GameSystems.CharacterSystem.BodyAcclimatizationTrait(20));
+            ReadyBodies.Remove(targetBody);
 
-            System.Console.WriteLine($"İşlem başarılı! Beden disforisi (Acclimatization) başladı. Beden 20 gün boyunca kısıtlı verimle çalışacak ve polis riski taşıyacak.");
+            System.Console.WriteLine($"İşlem başarılı! Yeni klon bedeni ayaklandı. Beden disforisi (Acclimatization) başladı. Beden 20 gün boyunca polis riski taşıyacak.");
         }
 
         // 3. Şamanın Kulübesi (Canavar Şifası ve Büyü)

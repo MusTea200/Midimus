@@ -22,7 +22,7 @@ namespace GameSystems.CoreSystem
             _rng = new Random();
         }
 
-        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, List<Character>? allCharacters = null, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null)
+        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, List<Character>? allCharacters = null, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null, GameSystems.CitySystem.TempleFacility? templeFacility = null)
         {
             List<ExpeditionResult> dailyResults = new List<ExpeditionResult>();
 
@@ -39,12 +39,7 @@ namespace GameSystems.CoreSystem
             OnDailySimulationCompleted?.Invoke(dailyResults);
 
             CurrentDay++;
-            if (VaultVHSTapes.Count > 0 && ledger != null)
-            {
-                int storageCost = VaultVHSTapes.Count * 50;
-                ledger.DeductBalance(storageCost);
-                System.Console.WriteLine($"VHS Soğutma/Saklama Masrafı: {storageCost} Altın kesildi.");
-            }
+            if (templeFacility != null && ledger != null) CalculateIllegalLabCosts(templeFacility, ledger);
             if (allCharacters != null)
             {
                 foreach (var c in allCharacters)
@@ -397,5 +392,54 @@ namespace GameSystems.CoreSystem
                 }
             }
         }
-    }
+
+        public void CalculateIllegalLabCosts(GameSystems.CitySystem.TempleFacility templeFacility, DailyLedger ledger)
+        {
+            if (templeFacility == null || ledger == null) return;
+
+            int totalCost = 100; // Richard's fixed salary
+            System.Console.WriteLine("Richard Gobrigez Maaşı: -100 Altın");
+
+            int vatCost = templeFacility.ActiveVats.Count * 150;
+            if (vatCost > 0)
+            {
+                totalCost += vatCost;
+                System.Console.WriteLine($"Üretim Bandı (Vat) Elektrik/Kimyasal Maliyeti: -{vatCost} Altın");
+            }
+
+            int vhsCostPerTape = templeFacility.LabLevel >= 3 ? 25 : 50;
+            int totalVhsCost = VaultVHSTapes.Count * vhsCostPerTape;
+            if (totalVhsCost > 0)
+            {
+                totalCost += totalVhsCost;
+                System.Console.WriteLine($"VHS Soğutma Deposu Faturası: -{totalVhsCost} Altın");
+            }
+
+            ledger.DeductBalance(totalCost);
+
+            if (ledger.MainBalance < 0)
+            {
+                System.Console.WriteLine("[KRİTİK HATA] Bütçe eksiye düştü! Elektrikler kesildi...");
+                foreach (var vat in templeFacility.ActiveVats)
+                {
+                    vat.DestroyBody();
+                }
+                templeFacility.ActiveVats.Clear();
+            }
+            else
+            {
+                // Process vat growth
+                for (int i = templeFacility.ActiveVats.Count - 1; i >= 0; i--)
+                {
+                    var vat = templeFacility.ActiveVats[i];
+                    vat.DecrementDay();
+                    if (vat.IsReady)
+                    {
+                        templeFacility.ReadyBodies.Add(vat);
+                        templeFacility.ActiveVats.RemoveAt(i);
+                    }
+                }
+            }
+        }
+}
 }
