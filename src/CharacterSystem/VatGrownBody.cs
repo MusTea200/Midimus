@@ -10,6 +10,7 @@ namespace GameSystems.CharacterSystem
         public int RemainingDays { get; private set; }
         public bool IsReady { get; private set; }
         public bool IsDestroyed { get; private set; }
+        public bool IsExpendableLabor { get; set; }
 
         // The body's base stats/buffs waiting to be harvested
         public Dictionary<AttributeType, int> BaseAttributes { get; private set; }
@@ -22,6 +23,7 @@ namespace GameSystems.CharacterSystem
             RemainingDays = isHighRisk ? 7 : 3;
             IsReady = false;
             IsDestroyed = false;
+            IsExpendableLabor = false;
 
             BaseAttributes = new Dictionary<AttributeType, int>();
             BaseTraits = new List<TraitType>();
