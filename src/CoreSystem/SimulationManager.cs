@@ -11,6 +11,7 @@ namespace GameSystems.CoreSystem
     {
         public int CurrentDay { get; private set; }
         public int HiddenKarmaScore { get; private set; }
+        public int GlobalReputation { get; set; } = 50;
         public System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape> VaultVHSTapes { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape>();
         private Random _rng;
 
