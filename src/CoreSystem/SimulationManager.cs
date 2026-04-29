@@ -217,9 +217,15 @@ namespace GameSystems.CoreSystem
             RelationshipBond? bond = relationshipManager.GetBond(charA, charB);
             int bondLevel = bond?.BondLevel ?? 0;
 
-            float baseSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest));
-            float baseSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest));
-            float successProbability = (baseSuccessA + baseSuccessB) / 2f;
+            // OPTIMIZATION: Cache BasicInsurancePolicy objects to avoid repeated allocations in hot path
+            var policyA = new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest);
+            var policyB = new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest);
+
+            // OPTIMIZATION: Calculate base success probabilities only once
+            float baseSuccessA = CalculateSuccessProbability(policyA);
+            float baseSuccessB = CalculateSuccessProbability(policyB);
+            float baseSuccessProbability = (baseSuccessA + baseSuccessB) / 2f;
+            float successProbability = baseSuccessProbability;
 
             bool isSuccess = false;
             AnimationTriggerType animType = AnimationTriggerType.NormalBounce;
@@ -256,8 +262,9 @@ namespace GameSystems.CoreSystem
                 }
             }
 
-                        float tempSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest));
-            float tempSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest));
+            // Calculate success with temporary stat buffs
+            float tempSuccessA = CalculateSuccessProbability(policyA);
+            float tempSuccessB = CalculateSuccessProbability(policyB);
             float tempSuccessProbability = (tempSuccessA + tempSuccessB) / 2f;
 
 
@@ -301,9 +308,10 @@ namespace GameSystems.CoreSystem
                 }
             }
 
-            float finalSuccessA = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest));
-            float finalSuccessB = CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest));
-            float tempBuffsOnly = tempSuccessProbability - ((CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charA, policy.TargetQuest)) + CalculateSuccessProbability(new GameSystems.QuestSystem.BasicInsurancePolicy(charB, policy.TargetQuest))) / 2f);
+            // OPTIMIZATION: Reuse cached calculation instead of recalculating 6 times
+            float finalSuccessA = CalculateSuccessProbability(policyA);
+            float finalSuccessB = CalculateSuccessProbability(policyB);
+            float tempBuffsOnly = tempSuccessProbability - baseSuccessProbability;
             float calculatedFinalSuccess = (finalSuccessA + finalSuccessB) / 2f + tempBuffsOnly;
             successProbability = Math.Clamp(calculatedFinalSuccess, 0f, 1f);
             isSuccess = _rng.NextDouble() <= successProbability;
