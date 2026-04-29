@@ -22,12 +22,18 @@ namespace GameSystems.CitySystem
             Console.WriteLine($"{character.Name}, {FacilityName} tesisine giriş yaptı.");
         }
 
-        public virtual bool RelaxCharacter(Character character)
+        public virtual bool RelaxCharacter(Character character, GameSystems.CoreSystem.PoliceManager? policeManager = null)
         {
             if (character.EquippedItems.Any(i => i.ItemName == "Midas'ın Gözyaşı"))
             {
                 Console.WriteLine($"{character.Name} Midas'ın Gözyaşı'nın etkisi altında! Eğlence tesislerine giremez.");
                 return false;
+            }
+
+            if (policeManager != null)
+            {
+                bool hasAcclimation = System.Linq.Enumerable.Any(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(character.AdvancedTraits));
+                if (hasAcclimation && (new System.Random()).NextDouble() <= 0.20) policeManager.TriggerPoliceInterrogation(character, Ledger);
             }
 
             if (Ledger.MainBalance < GoldCost)

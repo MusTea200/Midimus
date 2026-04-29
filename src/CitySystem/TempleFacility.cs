@@ -125,6 +125,61 @@ namespace GameSystems.CitySystem
         }
 
 
+
+        // --- LABORATUVAR AR-GE VE ALTYAPI SİSTEMİ ---
+        public int LabLevel { get; private set; } = 1;
+        public System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody> ActiveVats { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody>();
+        public System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody> ReadyBodies { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.VatGrownBody>();
+
+        public void UpgradeLab()
+        {
+            TalkToRichardGobrigez();
+            int upgradeCost = LabLevel == 1 ? 5000 : 15000;
+
+            if (_ledger.MainBalance >= upgradeCost)
+            {
+                if (LabLevel >= 3)
+                {
+                    System.Console.WriteLine("Richard: 'Laboratuvarımız zaten en üst seviyede.'");
+                    return;
+                }
+
+                _ledger.DeductBalance(upgradeCost);
+                LabLevel++;
+
+                System.Console.WriteLine($"AR-GE BAŞARILI! Laboratuvar Seviye {LabLevel} oldu.");
+                if (LabLevel == 2) System.Console.WriteLine("Yüksek Riskli klon üretimi (High Risk Vats) kilidi açıldı!");
+                if (LabLevel == 3) System.Console.WriteLine("Gelişmiş Soğutma Deposu inşa edildi. Kaset saklama maliyeti düştü.");
+            }
+            else
+            {
+                System.Console.WriteLine($"Richard: 'Sermaye eksik evlat. Yükseltme için {upgradeCost} altın gerek.'");
+            }
+        }
+
+        public void StartGrowingBody(bool isHighRisk)
+        {
+            TalkToRichardGobrigez();
+            if (isHighRisk && LabLevel < 2)
+            {
+                System.Console.WriteLine("Richard: 'Bu teknoloji için Seviye 2 Laboratuvar şart. Önce yatırım yap.'");
+                return;
+            }
+
+            int cost = isHighRisk ? 3000 : 1000;
+            if (_ledger.MainBalance >= cost)
+            {
+                _ledger.DeductBalance(cost);
+                var newVat = new GameSystems.CharacterSystem.VatGrownBody(isHighRisk);
+                ActiveVats.Add(newVat);
+                System.Console.WriteLine($"{newVat.VatId} üretim bandına alındı. Büyüme süreci başladı.");
+            }
+            else
+            {
+                System.Console.WriteLine($"Richard: 'Üretim maliyeti ({cost} altın) için yeterli bütçemiz yok.'");
+            }
+        }
+
         // --- SİBER ENTEGRASYONLAR ---
         public void InstallBrainChip(Character character)
         {
@@ -156,7 +211,7 @@ namespace GameSystems.CitySystem
 
             Random rng = new Random();
             Array mutations = Enum.GetValues(typeof(MutationType));
-            MutationType randomMutation = (MutationType)mutations.GetValue(rng.Next(mutations.Length));
+            MutationType randomMutation = (MutationType)(mutations.GetValue(rng.Next(mutations.Length)) ?? MutationType.SlimeArm);
 
             character.Mutations.Add(randomMutation);
 
@@ -213,29 +268,71 @@ namespace GameSystems.CitySystem
             Console.WriteLine($"{character.Name} tür değişimi geçirdi! Yeni türü: {character.Gender}");
         }
 
-        public MindDrive ExtractConsciousness(Character source)
+        public GameSystems.CharacterSystem.MindVHSTape? ExtractConsciousnessToVHS(GameSystems.CharacterSystem.Character source)
         {
             TalkToRichardGobrigez();
-            Console.WriteLine($"{source.Name}'nin zihni dijital bir çipe aktarılıyor...");
-            MindDrive drive = new MindDrive(source.Name, source.Traits, source.AdvancedTraits);
-            Console.WriteLine("Zihin aktarımı tamamlandı. Beden artık boş bir kabuk.");
+            int goldCost = 5000;
+            if (_ledger.MainBalance < goldCost)
+            {
+                System.Console.WriteLine($"Yetersiz altın. VHS aktarımı için {goldCost} altın gerekiyor.");
+                return null;
+            }
+            _ledger.DeductBalance(goldCost);
+
+            System.Console.WriteLine($"{source.Name}'nin zihni yasadışı bir VHS kasete aktarılıyor...");
+            GameSystems.CharacterSystem.MindVHSTape tape = new GameSystems.CharacterSystem.MindVHSTape(source.Name, source.Traits, source.AdvancedTraits, source.Attributes);
+
+            System.Console.WriteLine("Zihin kopyalandı. Kaynak beden klinik olarak ölü duruma getirildi (Kalıcı Ölüm).");
+            source.Stress = 100;
             source.Traits.Clear();
-            source.AdvancedTraits.Clear();
-            return drive;
+            return tape;
         }
 
-        public void ImplantConsciousness(MindDrive drive, Character targetBody)
+        public void ImplantVHSIntoBody(GameSystems.CharacterSystem.MindVHSTape tape, GameSystems.CharacterSystem.VatGrownBody targetBody, GameSystems.CharacterSystem.Character newCharacterInstance)
         {
             TalkToRichardGobrigez();
-            Console.WriteLine($"'{drive.OriginalName}' zihni {targetBody.Name} bedenine enjekte ediliyor...");
+            if (!targetBody.IsReady || targetBody.IsDestroyed)
+            {
+                System.Console.WriteLine("Richard: 'Bu beden henüz hazır değil veya çürümüş.'");
+                return;
+            }
 
-            targetBody.Traits.Clear();
-            targetBody.AdvancedTraits.Clear();
+            int goldCost = 10000;
+            if (_ledger.MainBalance < goldCost)
+            {
+                System.Console.WriteLine($"Yasadışı zihin enjeksiyonu operasyonu için {goldCost} altın gerekiyor.");
+                return;
+            }
+            _ledger.DeductBalance(goldCost);
 
-            targetBody.Traits.AddRange(drive.Traits);
-            targetBody.AdvancedTraits.AddRange(drive.AdvancedTraits);
+            System.Console.WriteLine($"'{tape.OriginalName}' VHS kaseti yeni klon bedenine ({targetBody.VatId}) entegre ediliyor...");
 
-            Console.WriteLine($"Zihin başarıyla yerleştirildi. Bu beden artık '{drive.OriginalName}' tecrübelerine sahip.");
+            newCharacterInstance.Traits.Clear();
+            newCharacterInstance.AdvancedTraits.Clear();
+            newCharacterInstance.IsVatGrown = true;
+
+            newCharacterInstance.Traits.AddRange(tape.Traits);
+            newCharacterInstance.AdvancedTraits.AddRange(tape.AdvancedTraits);
+            newCharacterInstance.Traits.AddRange(targetBody.BaseTraits);
+
+            // Bedenin genetik mutasyon statları ile kasetin tecrübe statlarını harmanla
+            foreach (var kvp in targetBody.BaseAttributes)
+            {
+                if (newCharacterInstance.Attributes.ContainsKey(kvp.Key)) newCharacterInstance.Attributes[kvp.Key] = kvp.Value;
+                else newCharacterInstance.Attributes.Add(kvp.Key, kvp.Value);
+            }
+
+            foreach (var kvp in tape.Attributes)
+            {
+                // Tecrübeler fiziksel sınırlarla birleşiyor (Basit toplama)
+                if (newCharacterInstance.Attributes.ContainsKey(kvp.Key)) newCharacterInstance.Attributes[kvp.Key] += (kvp.Value / 2); // Kasetten gelen statların yarısı
+                else newCharacterInstance.Attributes.Add(kvp.Key, kvp.Value / 2);
+            }
+
+            newCharacterInstance.AdvancedTraits.Add(new GameSystems.CharacterSystem.BodyAcclimatizationTrait(20));
+            ReadyBodies.Remove(targetBody);
+
+            System.Console.WriteLine($"İşlem başarılı! Yeni klon bedeni ayaklandı. Beden disforisi (Acclimatization) başladı. Beden 20 gün boyunca polis riski taşıyacak.");
         }
 
         // 3. Şamanın Kulübesi (Canavar Şifası ve Büyü)

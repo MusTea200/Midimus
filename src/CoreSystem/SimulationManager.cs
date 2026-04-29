@@ -3,11 +3,16 @@ using System.Linq;
 using System.Collections.Generic;
 using GameSystems.QuestSystem;
 using GameSystems.CharacterSystem;
+using GameSystems.StorySystem;
 
 namespace GameSystems.CoreSystem
 {
     public class SimulationManager
     {
+        public int CurrentDay { get; private set; }
+        public int HiddenKarmaScore { get; private set; }
+        public int GlobalReputation { get; set; } = 50;
+        public System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape> VaultVHSTapes { get; private set; } = new System.Collections.Generic.List<GameSystems.CharacterSystem.MindVHSTape>();
         private Random _rng;
 
         // UI için eventler (Sekizgen animasyon sistemine haber vermek için)
@@ -17,9 +22,16 @@ namespace GameSystems.CoreSystem
         public SimulationManager()
         {
             _rng = new Random();
+            HiddenKarmaScore = 0;
         }
 
-        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies)
+        public void AddKarma(int amount)
+        {
+            HiddenKarmaScore += amount;
+            string prefix = amount > 0 ? "+" : ""; System.Console.WriteLine($"[KARMA GÜNCELLENDİ] (Gizli Değer: {prefix}{amount})");
+        }
+
+        public List<ExpeditionResult> RunDailyExpeditions(List<InsurancePolicy> activePolicies, List<Character>? allCharacters = null, GameSystems.StorySystem.GlobalStoryState? state = null, DailyLedger? ledger = null, Character? mainCharacter = null, GameSystems.CitySystem.TempleFacility? templeFacility = null)
         {
             List<ExpeditionResult> dailyResults = new List<ExpeditionResult>();
 
@@ -34,6 +46,39 @@ namespace GameSystems.CoreSystem
 
             // Günün tamamı bittiğinde bilanço için tetikle
             OnDailySimulationCompleted?.Invoke(dailyResults);
+
+            CurrentDay++;
+            if (templeFacility != null && ledger != null) CalculateIllegalLabCosts(templeFacility, ledger);
+            if (allCharacters != null)
+            {
+                foreach (var c in allCharacters)
+                {
+                    if (c.IsLockedInCocoon)
+                    {
+                        if (CurrentDay - c.CocoonEntryDay >= 7)
+                        {
+                            c.IsLockedInCocoon = false;
+                            Console.WriteLine($"{c.Name} kozadan çıktı! İnanılmaz bir mutasyon geçirdi.");
+                            // Add super trait or massive stats here
+                            if (c.Attributes.ContainsKey(GameSystems.CharacterSystem.AttributeType.Strength)) c.Attributes[GameSystems.CharacterSystem.AttributeType.Strength] += 50;
+                            else c.Attributes.Add(GameSystems.CharacterSystem.AttributeType.Strength, 50);
+                        }
+                    }
+
+                    var trait = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(c.AdvancedTraits));
+                    if (trait != null)
+                    {
+                        trait.DecrementDay();
+                        if (trait.RemainingDays <= 0)
+                        {
+                            c.AdvancedTraits.Remove(trait);
+                            System.Console.WriteLine($"{c.Name} yeni bedenine tamamen uyum sağladı! Beden disforisi bitti.");
+                        }
+                    }
+                }
+            }
+
+            if (state != null && ledger != null && mainCharacter != null) ProcessDailyGoblinInvestment(state, ledger, mainCharacter);
 
             return dailyResults;
         }
@@ -203,6 +248,8 @@ namespace GameSystems.CoreSystem
 
             // Başarı şansı = (1 - Tehlike - Stat Eksikliği) * Karakterin Uyumu
             float chance = (1f - baseDanger - statPenalty) * complianceFactor;
+            var accTrait = System.Linq.Enumerable.FirstOrDefault(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(policy.InsuredCharacter.AdvancedTraits));
+            if (accTrait != null) chance *= accTrait.GetEfficiencyMultiplier();
             if (policy.InsuredCharacter.EquippedItems.Any(i => i.ItemName == "Çivili Kefen")) chance = 0.90f;
 
             return Math.Clamp(chance, 0f, 1f);
@@ -344,5 +391,76 @@ namespace GameSystems.CoreSystem
             }
             return new ExpeditionResult(policy, isSuccess, animType, lootedMaterials);
         }
-    }
+
+
+
+        public void ProcessDailyGoblinInvestment(GlobalStoryState state, DailyLedger ledger, Character mainCharacter)
+        {
+            if (state.HasFlag("Active_Goblin_Investment"))
+            {
+                double roll = _rng.NextDouble();
+                if (roll <= 0.70)
+                {
+                    ledger.AddBalance(50);
+                    Console.WriteLine("Gölge Komisyoncu Yatırımı: Günlük temettü (+50 Altın) kasaya eklendi.");
+                }
+                else
+                {
+                    Console.WriteLine("GÖLGE KOMİSYONCU KAÇTI! 'Goblin Kaçtı' eventi tetiklendi.");
+                    state.RemoveFlag("Active_Goblin_Investment");
+                    mainCharacter.Stress += 20;
+                    Console.WriteLine($"Yatırım battı. {mainCharacter.Name} dolandırıldığını anladı ve stresi arttı (+20).");
+                }
+            }
+        }
+
+        public void CalculateIllegalLabCosts(GameSystems.CitySystem.TempleFacility templeFacility, DailyLedger ledger)
+        {
+            if (templeFacility == null || ledger == null) return;
+
+            int totalCost = 100; // Richard's fixed salary
+            System.Console.WriteLine("Richard Gobrigez Maaşı: -100 Altın");
+
+            int vatCost = templeFacility.ActiveVats.Count * 150;
+            if (vatCost > 0)
+            {
+                totalCost += vatCost;
+                System.Console.WriteLine($"Üretim Bandı (Vat) Elektrik/Kimyasal Maliyeti: -{vatCost} Altın");
+            }
+
+            int vhsCostPerTape = templeFacility.LabLevel >= 3 ? 25 : 50;
+            int totalVhsCost = VaultVHSTapes.Count * vhsCostPerTape;
+            if (totalVhsCost > 0)
+            {
+                totalCost += totalVhsCost;
+                System.Console.WriteLine($"VHS Soğutma Deposu Faturası: -{totalVhsCost} Altın");
+            }
+
+            ledger.DeductBalance(totalCost);
+
+            if (ledger.MainBalance < 0)
+            {
+                System.Console.WriteLine("[KRİTİK HATA] Bütçe eksiye düştü! Elektrikler kesildi...");
+                foreach (var vat in templeFacility.ActiveVats)
+                {
+                    vat.DestroyBody();
+                }
+                templeFacility.ActiveVats.Clear();
+            }
+            else
+            {
+                // Process vat growth
+                for (int i = templeFacility.ActiveVats.Count - 1; i >= 0; i--)
+                {
+                    var vat = templeFacility.ActiveVats[i];
+                    vat.DecrementDay();
+                    if (vat.IsReady)
+                    {
+                        templeFacility.ReadyBodies.Add(vat);
+                        templeFacility.ActiveVats.RemoveAt(i);
+                    }
+                }
+            }
+        }
+}
 }

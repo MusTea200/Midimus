@@ -1,6 +1,7 @@
 using System;
 using GameSystems.CharacterSystem;
 using GameSystems.CoreSystem;
+using GameSystems.StorySystem;
 
 namespace GameSystems.CitySystem
 {
@@ -8,12 +9,15 @@ namespace GameSystems.CitySystem
     {
         private DailyLedger _ledger;
         private Random _rng;
+        private GlobalStoryState _storyState;
+        public bool ShowAlienItems { get; private set; }
 
-        public BlackMarketFacility(DailyLedger ledger)
+        public BlackMarketFacility(DailyLedger ledger, GlobalStoryState storyState)
             : base("Karaborsa", 1500)
         {
             _ledger = ledger;
             _rng = new Random();
+            _storyState = storyState;
         }
 
         public override void EnterFacility(Character character)
@@ -37,6 +41,12 @@ namespace GameSystems.CitySystem
                     else mysteryItem = new Item("Midas'ın Gözyaşı", randomBaseStat);
                     mysteryItem.IsCursed = true;
                 }
+                else if (ShowAlienItems && _rng.NextDouble() <= 0.40)
+                {
+                    randomBaseStat += 20;
+                    mysteryItem = new Item($"Uzaylı/Boyutsal Eşya #{_rng.Next(100, 999)}", randomBaseStat);
+                    Console.WriteLine("Boyutlararası radyasyon yayan bir eşya...");
+                }
                 else
                 {
                     mysteryItem = new Item($"Gizemli Kutu Eşyası #{_rng.Next(100, 999)}", randomBaseStat);
@@ -54,6 +64,12 @@ namespace GameSystems.CitySystem
                 Console.WriteLine("Karaborsada veresiye geçmez. Yeterli altınınız yok.");
                 return null;
             }
+        }
+
+        public void EnableAlienItems()
+        {
+            ShowAlienItems = true;
+            Console.WriteLine("Karaborsa'ya uzaylı/boyutsal teknolojiler (Alien Tech) eklendi.");
         }
     }
 }

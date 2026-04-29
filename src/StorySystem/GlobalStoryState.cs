@@ -9,6 +9,7 @@ namespace GameSystems.StorySystem
         public GlobalStoryState()
         {
             _activeFlags = new HashSet<string>();
+            DiscoveredOtherUniverses = false;
         }
 
         public void AddFlag(string flagName)
@@ -20,6 +21,8 @@ namespace GameSystems.StorySystem
         {
             return _activeFlags.Contains(flagName);
         }
+
+        public bool DiscoveredOtherUniverses { get; set; }
 
         public void RemoveFlag(string flagName)
         {

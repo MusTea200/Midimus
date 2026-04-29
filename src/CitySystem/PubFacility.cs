@@ -14,8 +14,16 @@ namespace GameSystems.CitySystem
             _rng = new Random();
         }
 
-        public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager)
+        public void Socialize(Character charA, Character charB, RelationshipManager relationshipManager, GameSystems.CoreSystem.PoliceManager? policeManager = null)
         {
+            if (policeManager != null)
+            {
+                bool aHasAcclimation = System.Linq.Enumerable.Any(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(charA.AdvancedTraits));
+                bool bHasAcclimation = System.Linq.Enumerable.Any(System.Linq.Enumerable.OfType<GameSystems.CharacterSystem.BodyAcclimatizationTrait>(charB.AdvancedTraits));
+
+                if (aHasAcclimation && _rng.NextDouble() <= 0.20) policeManager.TriggerPoliceInterrogation(charA, Ledger);
+                if (bHasAcclimation && _rng.NextDouble() <= 0.20) policeManager.TriggerPoliceInterrogation(charB, Ledger);
+            }
             if (charA.HasBrainChip || charB.HasBrainChip)
             {
                 Console.WriteLine("Beyin çipi olan bir karakterin sosyalleşme yetisi yoktur.");
