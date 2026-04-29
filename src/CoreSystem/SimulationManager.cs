@@ -9,6 +9,10 @@ namespace GameSystems.CoreSystem
 {
     public class SimulationManager
     {
+        // Performance optimization: Cache enum values to avoid repeated allocations from Enum.GetValues()
+        private static readonly CraftingMaterial[] _craftingMaterials = (CraftingMaterial[])Enum.GetValues(typeof(CraftingMaterial));
+        private static readonly AttributeType[] _attributeTypes = (AttributeType[])Enum.GetValues(typeof(AttributeType));
+
         public int CurrentDay { get; private set; }
         public int HiddenKarmaScore { get; private set; }
         public int GlobalReputation { get; set; } = 50;
@@ -187,40 +191,14 @@ namespace GameSystems.CoreSystem
             Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
             if (isSuccess)
             {
-                Array materials = Enum.GetValues(typeof(CraftingMaterial));
+                // Performance optimization: Using cached _craftingMaterials array
                 int numMaterialTypes = _rng.Next(1, 4);
                 for (int i = 0; i < numMaterialTypes; i++)
                 {
-                    CraftingMaterial randomMat = (CraftingMaterial)materials.GetValue(_rng.Next(materials.Length))!;
+                    CraftingMaterial randomMat = _craftingMaterials[_rng.Next(_craftingMaterials.Length)];
                     int amount = (int)(_rng.Next(1, policy.TargetQuest.DifficultyLevel * 2 + 2));
                     if (lootedMaterials.ContainsKey(randomMat)) lootedMaterials[randomMat] += amount;
                     else lootedMaterials.Add(randomMat, amount);
-                }
-            }
-
-            // Başarılı bir zindan gezisi sonrası rastgele ganimet (Loot)
-            if (isSuccess)
-            {
-                Array materials = Enum.GetValues(typeof(CraftingMaterial));
-
-                // 1 ila 3 farklı çeşit materyal düşsün
-                int numMaterialTypes = _rng.Next(1, 4);
-
-                for (int i = 0; i < numMaterialTypes; i++)
-                {
-                    CraftingMaterial randomMat = (CraftingMaterial)materials.GetValue(_rng.Next(materials.Length))!;
-
-                    // Zorluğa göre düşen miktar
-                    int amount = _rng.Next(1, policy.TargetQuest.DifficultyLevel * 2 + 2);
-
-                    if (lootedMaterials.ContainsKey(randomMat))
-                    {
-                        lootedMaterials[randomMat] += amount;
-                    }
-                    else
-                    {
-                        lootedMaterials.Add(randomMat, amount);
-                    }
                 }
             }
 
@@ -278,10 +256,9 @@ namespace GameSystems.CoreSystem
             if (bondLevel >= 1)
             {
                 // Temp stat buff
-                Array attributes = Enum.GetValues(typeof(AttributeType));
-
+                // Performance optimization: Using cached _attributeTypes array
                 var eligibleStatsA = new List<AttributeType>();
-                foreach (AttributeType attr in attributes)
+                foreach (AttributeType attr in _attributeTypes)
                     if (charA.Attributes.ContainsKey(attr) && charA.Attributes[attr] < 100)
                         eligibleStatsA.Add(attr);
                 if (eligibleStatsA.Count > 0)
@@ -292,7 +269,7 @@ namespace GameSystems.CoreSystem
                 }
 
                 var eligibleStatsB = new List<AttributeType>();
-                foreach (AttributeType attr in attributes)
+                foreach (AttributeType attr in _attributeTypes)
                     if (charB.Attributes.ContainsKey(attr) && charB.Attributes[attr] < 100)
                         eligibleStatsB.Add(attr);
                 if (eligibleStatsB.Count > 0)
@@ -332,7 +309,8 @@ namespace GameSystems.CoreSystem
                 }
                 else if (aIsMonster && bIsMonster)
                 {
-                    foreach (AttributeType attr in Enum.GetValues(typeof(AttributeType)))
+                    // Performance optimization: Using cached _attributeTypes array
+                    foreach (AttributeType attr in _attributeTypes)
                     {
                         if (charA.Attributes.ContainsKey(attr))
                         {
@@ -379,11 +357,11 @@ namespace GameSystems.CoreSystem
             Dictionary<CraftingMaterial, int> lootedMaterials = new Dictionary<CraftingMaterial, int>();
             if (isSuccess)
             {
-                Array materials = Enum.GetValues(typeof(CraftingMaterial));
+                // Performance optimization: Using cached _craftingMaterials array
                 int numMaterialTypes = _rng.Next(1, 4);
                 for (int i = 0; i < numMaterialTypes; i++)
                 {
-                    CraftingMaterial randomMat = (CraftingMaterial)materials.GetValue(_rng.Next(materials.Length))!;
+                    CraftingMaterial randomMat = _craftingMaterials[_rng.Next(_craftingMaterials.Length)];
                     int amount = (int)(_rng.Next(1, policy.TargetQuest.DifficultyLevel * 2 + 2) * lootMultiplier);
                     if (lootedMaterials.ContainsKey(randomMat)) lootedMaterials[randomMat] += amount;
                     else lootedMaterials.Add(randomMat, amount);
