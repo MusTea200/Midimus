@@ -21,17 +21,32 @@ namespace GameSystems.CoreSystem
         }
 
         public Dictionary<CraftingMaterial, int> MaterialInventory { get; private set; }
+        public List<Item> ItemInventory { get; private set; }
 
         public PlayerManager(int initialSleightOfHand = 50, int initialPersuasion = 50)
         {
             SleightOfHand = initialSleightOfHand;
             Persuasion = initialPersuasion;
             MaterialInventory = new Dictionary<CraftingMaterial, int>();
+            ItemInventory = new List<Item>();
 
             foreach (CraftingMaterial mat in Enum.GetValues(typeof(CraftingMaterial)))
             {
                 MaterialInventory[mat] = 0;
             }
+        }
+
+        public void AddInventoryItem(Item item)
+        {
+            if (item != null)
+            {
+                ItemInventory.Add(item);
+            }
+        }
+
+        public bool RemoveInventoryItem(Item item)
+        {
+            return ItemInventory.Remove(item);
         }
 
         public void AddMaterial(CraftingMaterial material, int amount)
@@ -97,7 +112,13 @@ namespace GameSystems.CoreSystem
             Console.WriteLine($"{addict.Name} Midas'ın Gözyaşı'nın etkisiyle {goldItem.ItemName} eşyasını tüketti.");
             Console.WriteLine($"Stres {stressRelief} azaldı. (Yeni Stres: {addict.Stress})");
 
-            // Eşya yok olur (Inventory sistemi burada var sayılıyor, şimdilik sadece logic işleniyor)
+            // Eşya yok olur
+            if (addict.EquippedItems.Contains(goldItem))
+            {
+                addict.EquippedItems.Remove(goldItem);
+            }
+
+            RemoveInventoryItem(goldItem);
         }
     }
 }
